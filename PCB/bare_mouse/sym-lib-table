@@ -1,0 +1,5 @@
+(sym_lib_table
+  (lib (name "bloo-rescue")(type "Legacy")(uri "${KIPRJMOD}/bloo-rescue.lib")(options "")(descr ""))
+  (lib (name "custom")(type "Legacy")(uri "${KIPRJMOD}/custom.lib")(options "")(descr ""))
+  (lib (name "bloo-copy-rescue")(type "Legacy")(uri "${KIPRJMOD}/bloo copy-rescue.lib")(options "")(descr ""))
+)
