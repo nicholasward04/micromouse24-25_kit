@@ -1,0 +1,17 @@
+PA11, PA12 are USB- and USB+ respectively
+
+PA11 and PA12 are currently occupied by LED_RED and LED_BLUE, which should be moved to 
+PC15 and PC13 (check if PC13 and PC15 are GPIO)
+
+ESD Protection with USBLC6-2SC6
+-ESD Protection chip should be close to the USB connector
+
+USB- and USB+ traces should be of equal length
+- Differential matching required, based on distance apart, trace width should be calculated
+- https://jlcpcb.com/pcb-impedance-calculator (USB impedance should be 90 ohms)
+
+USB Flash and Debug does not seem particularly useful compared to the increased time and effort associated with its implementation --- Talk to Kyle about this
+
+
+
+
