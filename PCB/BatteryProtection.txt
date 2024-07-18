@@ -1,2 +1,0 @@
-Use two ideal diodes in a Dual Ideal Diode ORing configuration to select the higher voltage (always the battery if both are connected)
-https://www.ti.com/lit/ds/symlink/lm66100.pdf (page 10 for schematic)
