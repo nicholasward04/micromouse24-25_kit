@@ -8,11 +8,11 @@ Below is the relevant schematic.
 
 Version using STM32 Bluepill front and back. The middle 2 layers of the board are mostly empty asides from a few traces and a GND and power plane, and therefore will not be included by image.
 
-<img src="https://github.com/user-attachments/assets/7a1101fa-6da8-4797-8f15-576cd310add3" width="500">  <img src="https://github.com/user-attachments/assets/772ac968-2068-4fbf-b332-b3c57b703e93" width="500">
+<img src="https://github.com/user-attachments/assets/7a1101fa-6da8-4797-8f15-576cd310add3" width="350">  <img src="https://github.com/user-attachments/assets/772ac968-2068-4fbf-b332-b3c57b703e93" width="350">
 
 Version using STM32F103C8T6 chip front and back. Same as previous in terms of middle 2 layers. 
 
-<img src="https://github.com/user-attachments/assets/0bcf6cd8-7790-47f7-8646-606f38799931" width="500">  <img src="https://github.com/user-attachments/assets/06eaa6ac-2706-48ad-be41-6625ef521af0" width="500">
+<img src="https://github.com/user-attachments/assets/0bcf6cd8-7790-47f7-8646-606f38799931" width="350">  <img src="https://github.com/user-attachments/assets/06eaa6ac-2706-48ad-be41-6625ef521af0" width="350">
 
 Both designs are almost completely identical besides a power LED and a few capacitors. 
 
