@@ -20,4 +20,4 @@ Both designs are almost completely identical besides a power LED and a few capac
 
 [include completed PCBs here once soldered]
 
-The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found here <- insert link. As I work on it, I will push changes to this repository (micromouse24-25_kit). 
+The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found [here](https://github.com/nicholasward04/teamfriendship.git). As I work on it, I will push changes to this repository (micromouse24-25_kit). 
