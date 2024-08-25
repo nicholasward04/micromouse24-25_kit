@@ -14,10 +14,8 @@ Version using STM32F103C8T6 chip front and back. Same as previous in terms of mi
 
 <img src="https://github.com/user-attachments/assets/0bcf6cd8-7790-47f7-8646-606f38799931" width="350">  <img src="https://github.com/user-attachments/assets/06eaa6ac-2706-48ad-be41-6625ef521af0" width="350">
 
-Both designs are almost completely identical besides a power LED and a few capacitors. 
+Both designs are almost completely identical besides a power LED and a few capacitors. Here are the bare PCBs.
 
-[include bare PCBs here]
-
-[include completed PCBs here once soldered]
+<img src="https://github.com/user-attachments/assets/6a45d8fa-f9d8-41f5-b571-5c96f9dcff8b" width="700">
 
 The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found [here](https://github.com/nicholasward04/teamfriendship.git). As I work on it, I will push changes to this repository (micromouse24-25_kit). 
