@@ -57,7 +57,7 @@
         }
       ],
       "drc_exclusions": [
-        "clearance|192500000|175400000|a788b5db-7fb0-42d8-b15a-54a05d665bc2|94e04253-93a3-4523-bc3a-1eba43799bdd"
+        "clearance|192756824|175400000|a788b5db-7fb0-42d8-b15a-54a05d665bc2|94e04253-93a3-4523-bc3a-1eba43799bdd"
       ],
       "meta": {
         "filename": "board_design_settings.json",
