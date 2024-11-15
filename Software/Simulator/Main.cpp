@@ -51,37 +51,28 @@ struct Maze {
 char dir_chars[4] = {'n', 'e', 's', 'w'};
 int dir_mask[4] = {0b1000, 0b0100, 0b0010, 0b0001};
 
-bool offMaze(int mouse_pos_x, int mouse_pos_y)
-{
-    if (mouse_pos_x < 0 || mouse_pos_x > 15 || mouse_pos_y < 0 || mouse_pos_y > 15)
-    {
+bool offMaze(int mouse_pos_x, int mouse_pos_y) {
+    if (mouse_pos_x < 0 || mouse_pos_x > 15 || mouse_pos_y < 0 || mouse_pos_y > 15) {
         return false; // False means a cell is off of the maze
     }
     return true;
 }
 
-void updateSimulator(Maze maze) // Redraws the simulator based off of current distance and wall values
-{
-    for (int y = 0; y < 16; y++)
-    {
-        for (int x = 0; x < 16; x++)
-        {
+void updateSimulator(Maze maze) { // Redraws the simulator based off of current distance and wall values
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
             API::setText(x, y, std::to_string(maze.distances[y][x])); // Update simulator distances
 
-            if (maze.cellWalls[y][x] & NORTH_MASK) // Update simulator walls
-            {
+            if (maze.cellWalls[y][x] & NORTH_MASK) { // Update simulator walls
                 API::setWall(x, y, 'n');
             }
-            if (maze.cellWalls[y][x] & EAST_MASK)
-            {
+            if (maze.cellWalls[y][x] & EAST_MASK) {
                 API::setWall(x, y, 'e');
             }
-            if (maze.cellWalls[y][x] & SOUTH_MASK)
-            {
+            if (maze.cellWalls[y][x] & SOUTH_MASK) {
                 API::setWall(x, y, 's');
             }
-            if (maze.cellWalls[y][x] & WEST_MASK)
-            {
+            if (maze.cellWalls[y][x] & WEST_MASK) {
                 API::setWall(x, y, 'w');
             }
         }
@@ -111,7 +102,16 @@ void updateMousePos(Coord *pos, Direction dir) {
     }
 }
 
-void setGoalCell(Maze* maze, int num_of_goals) {}
+void setGoalCell(Maze* maze, int num_of_goals) {
+    switch (num_of_goals) {
+        case 1:
+            maze->goalPos[0] = {0, 0};
+            break;
+        case 4:
+            maze->goalPos[0] = {7, 7}; maze->goalPos[1] = {7, 8}; maze->goalPos[2] = {8, 7}; maze->goalPos[3] = {8, 8};
+            break;
+    }
+}
 
 void Floodfill(Maze* maze) {}
 
