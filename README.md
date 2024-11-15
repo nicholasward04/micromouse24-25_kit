@@ -18,10 +18,4 @@ Both designs are almost completely identical besides a power LED and a few capac
 
 <img src="https://github.com/user-attachments/assets/6a45d8fa-f9d8-41f5-b571-5c96f9dcff8b" width="700">
 
-<<<<<<< HEAD
-[include completed PCBs here once soldered]
-
-The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found here <- insert link. As I work on it, I will push changes to this repository (micromouse24-25_kit). 
-=======
 The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found [here](https://github.com/nicholasward04/teamfriendship.git). As I work on it, I will push changes to this repository (micromouse24-25_kit). 
->>>>>>> c17d8b8f2e1bf4a62d553ae3a7b116a76263ae3a
