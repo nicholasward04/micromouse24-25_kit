@@ -49,7 +49,7 @@ struct Maze {
 };
 
 char dir_chars[4] = {'n', 'e', 's', 'w'};
-int dir_mask[4] = {0b1000, 0b0100, 0b0010, 0b0001};
+DirectionBitmask mask_array[4] = {NORTH_MASK, EAST_MASK, SOUTH_MASK, WEST_MASK};
 
 bool offMaze(int mouse_pos_x, int mouse_pos_y) {
     if (mouse_pos_x < 0 || mouse_pos_x > 15 || mouse_pos_y < 0 || mouse_pos_y > 15) {
@@ -59,29 +59,64 @@ bool offMaze(int mouse_pos_x, int mouse_pos_y) {
 }
 
 void updateSimulator(Maze maze) { // Redraws the simulator based off of current distance and wall values
-    for (int y = 0; y < 16; y++) {
-        for (int x = 0; x < 16; x++) {
-            API::setText(x, y, std::to_string(maze.distances[y][x])); // Update simulator distances
+    for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 16; y++) {
+            API::setText(x, y, std::to_string(maze.distances[x][y])); // Update simulator distances
 
-            if (maze.cellWalls[y][x] & NORTH_MASK) { // Update simulator walls
-                API::setWall(x, y, 'n');
+            if (maze.cellWalls[x][y] & NORTH_MASK) { // Update simulator walls
+                API::setWall(y, x, 'n');
             }
-            if (maze.cellWalls[y][x] & EAST_MASK) {
-                API::setWall(x, y, 'e');
+            if (maze.cellWalls[x][y] & EAST_MASK) {
+                API::setWall(y, x, 'e');
             }
-            if (maze.cellWalls[y][x] & SOUTH_MASK) {
-                API::setWall(x, y, 's');
+            if (maze.cellWalls[x][y] & SOUTH_MASK) {
+                API::setWall(y, x, 's');
             }
-            if (maze.cellWalls[y][x] & WEST_MASK) {
-                API::setWall(x, y, 'w');
+            if (maze.cellWalls[x][y] & WEST_MASK) {
+                API::setWall(y, x, 'w');
             }
         }
     }
 }
 
-CellList* getNeighborCells(Maze* maze) {}
+CellList* getNeighborCells(Maze* maze, Cell* cell) {
+    
+}
 
-void scanWalls(Maze* maze) {}
+void scanWallsAdjacent(Maze* maze, Coord cur_pos, Direction cur_dir) {
+    switch (cur_dir) {
+        case NORTH:
+            if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[cur_pos.x][cur_pos.y + 1] = maze->cellWalls[cur_pos.x][cur_pos.y + 1] || mask_array[(cur_dir + 2) % 4]; }
+            break;
+        case EAST:
+            if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[cur_pos.x + 1][cur_pos.y] = maze->cellWalls[cur_pos.x + 1][cur_pos.y] || mask_array[(cur_dir + 2) % 4]; }
+            break;
+        case SOUTH:
+            if (offMaze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[cur_pos.x][cur_pos.y - 1] = maze->cellWalls[cur_pos.x][cur_pos.y - 1] || mask_array[(cur_dir + 2) % 4]; }
+            break;
+        case WEST:
+            if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[cur_pos.x - 1][cur_pos.y] = maze->cellWalls[cur_pos.x - 1][cur_pos.y] || mask_array[(cur_dir + 2) % 4]; }
+            break;
+    }
+}
+
+void scanWalls(Maze* maze) {
+    Direction cur_dir = maze->mouse_dir;
+    Coord cur_pos = {maze->mouse_pos.x, maze->mouse_pos.y};
+
+    if (API::wallFront()) {
+        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[cur_dir];
+        scanWallsAdjacent(maze, cur_pos, cur_dir);
+    }
+    if (API::wallLeft()) {
+        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[(cur_dir + 3) % 4];
+        scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 3) % 4));
+    }
+    if (API::wallRight()) {
+        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[(cur_dir + 1) % 4];
+        scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 1) % 4));
+    }
+}
 
 void updateMousePos(Coord *pos, Direction dir) {
     switch (dir) {
@@ -115,6 +150,6 @@ void setGoalCell(Maze* maze, int num_of_goals) {
 
 void Floodfill(Maze* maze) {}
 
-Cell bestCell(Maze* maze) {}
+Direction bestCell(Coord mouse_pos) {}
 
 int main(int argc, char* argv[]) {}
