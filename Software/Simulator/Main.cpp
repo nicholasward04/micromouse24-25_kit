@@ -85,10 +85,10 @@ CellList* getNeighborCells(Maze* maze, Coord* pos) {
     uint8_t num_cells = 0;
 
     // If a cell is adjacent to the cell represented by pos, exists in the 16x16 maze, and is not blocked by a wall, add it to the cell list
-    if (offMaze(x_coord, y_coord+1) && (maze->cellWalls[x_coord][y_coord] & NORTH_MASK)) { north_cell = true; num_cells++; } // NORTH
-    if (offMaze(x_coord+1, y_coord) && (maze->cellWalls[x_coord][y_coord] & EAST_MASK)) { east_cell = true; num_cells++; }   // EAST
-    if (offMaze(x_coord, y_coord-1) && (maze->cellWalls[x_coord][y_coord] & SOUTH_MASK)) { south_cell = true; num_cells++; } // SOUTH
-    if (offMaze(x_coord-1, y_coord) && (maze->cellWalls[x_coord][y_coord] & WEST_MASK)) { west_cell = true; num_cells++; }   // WEST
+    if (offMaze(x_coord, y_coord+1) && !(maze->cellWalls[x_coord][y_coord] & NORTH_MASK)) { north_cell = true; num_cells++; } // NORTH
+    if (offMaze(x_coord+1, y_coord) && !(maze->cellWalls[x_coord][y_coord] & EAST_MASK)) { east_cell = true; num_cells++; }   // EAST
+    if (offMaze(x_coord, y_coord-1) && !(maze->cellWalls[x_coord][y_coord] & SOUTH_MASK)) { south_cell = true; num_cells++; } // SOUTH
+    if (offMaze(x_coord-1, y_coord) && !(maze->cellWalls[x_coord][y_coord] & WEST_MASK)) { west_cell = true; num_cells++; }   // WEST
 
     cell_list->size = num_cells;
     cell_list->cells = (Cell*)malloc(num_cells*sizeof(Cell)); 
@@ -116,35 +116,32 @@ CellList* getNeighborCells(Maze* maze, Coord* pos) {
 void scanWallsAdjacent(Maze* maze, Coord cur_pos, Direction cur_dir) {
     switch (cur_dir) {
         case NORTH:
-            if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[cur_pos.x][cur_pos.y + 1] = maze->cellWalls[cur_pos.x][cur_pos.y + 1] || mask_array[(cur_dir + 2) % 4]; }
+            if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[cur_pos.x][cur_pos.y + 1] |= SOUTH_MASK; }
             break;
         case EAST:
-            if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[cur_pos.x + 1][cur_pos.y] = maze->cellWalls[cur_pos.x + 1][cur_pos.y] || mask_array[(cur_dir + 2) % 4]; }
-            break;
-        case SOUTH:
-            if (offMaze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[cur_pos.x][cur_pos.y - 1] = maze->cellWalls[cur_pos.x][cur_pos.y - 1] || mask_array[(cur_dir + 2) % 4]; }
+            if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[cur_pos.x + 1][cur_pos.y] |= WEST_MASK; }
             break;
         case WEST:
-            if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[cur_pos.x - 1][cur_pos.y] = maze->cellWalls[cur_pos.x - 1][cur_pos.y] || mask_array[(cur_dir + 2) % 4]; }
+            if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[cur_pos.x - 1][cur_pos.y] |= EAST_MASK; }
             break;
     }
 }
 
 uint8_t scanWalls(Maze* maze) { // Checks wall information based on mouse's current position and updates maze walls. Returns an integer 0-3 depending on # of walls spotted
     Direction cur_dir = maze->mouse_dir;
-    Coord cur_pos = {maze->mouse_pos.x, maze->mouse_pos.y};
+    Coord cur_pos = maze->mouse_pos;
     uint8_t walls_changed = 0;
 
     if (API::wallFront()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[cur_dir];
+        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[cur_dir];
         scanWallsAdjacent(maze, cur_pos, cur_dir); walls_changed += 1;
     }
     if (API::wallLeft()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[(cur_dir + 3) % 4];
+        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[(cur_dir + 3) % 4];
         scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 3) % 4)); walls_changed += 1;
     }
     if (API::wallRight()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] = maze->cellWalls[cur_pos.x][cur_pos.y] || mask_array[(cur_dir + 1) % 4];
+        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[(cur_dir + 1) % 4];
         scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 1) % 4)); walls_changed += 1;
     }
     return walls_changed;
@@ -153,18 +150,16 @@ uint8_t scanWalls(Maze* maze) { // Checks wall information based on mouse's curr
 void updateMousePos(Coord *pos, Direction dir) {
     switch (dir) {
         case NORTH:
-            pos->y++;
-            break;
-        case SOUTH:
-            pos->y--;
-            break;
-        case WEST:
-            pos->x--;
-            break;
-        case EAST:
             pos->x++;
             break;
-        default:
+        case SOUTH:
+            pos->x--;
+            break;
+        case WEST:
+            pos->y--;
+            break;
+        case EAST:
+            pos->y++;
             break;
     }
 }
