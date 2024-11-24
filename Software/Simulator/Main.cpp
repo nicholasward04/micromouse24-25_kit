@@ -77,7 +77,38 @@ void updateSimulator(Maze maze) {                                     // Redraws
 }
 
 CellList* getNeighborCells(Maze* maze, Coord* pos) {
-    
+    CellList* cell_list = (CellList*)malloc(sizeof(CellList));
+
+    bool north_cell = false, east_cell = false, south_cell = false, west_cell = false;
+    uint8_t x_coord = pos->x, y_coord = pos->y;
+    uint8_t num_cells = 0;
+
+    // If a cell is adjacent to the cell represented by pos, exists in the 16x16 maze, and is not blocked by a wall, add it to the cell list
+    if (offMaze(x_coord, y_coord+1) && (maze->cellWalls[x_coord][y_coord] & NORTH_MASK)) { north_cell = true; num_cells++; } // NORTH
+    if (offMaze(x_coord+1, y_coord) && (maze->cellWalls[x_coord][y_coord] & EAST_MASK)) { east_cell = true; num_cells++; }   // EAST
+    if (offMaze(x_coord, y_coord-1) && (maze->cellWalls[x_coord][y_coord] & SOUTH_MASK)) { south_cell = true; num_cells++; } // SOUTH
+    if (offMaze(x_coord-1, y_coord) && (maze->cellWalls[x_coord][y_coord] & WEST_MASK)) { west_cell = true; num_cells++; }   // WEST
+
+    cell_list->size = num_cells;
+    cell_list->cells = (Cell*)malloc(num_cells*sizeof(Cell)); 
+
+    uint8_t i = 0; // Create new cells with appropriate coordinate and direction and add to the cell list if it is not blocked or off the maze
+    if (north_cell) {
+        Cell new_cell = {{x_coord, y_coord+1}, NORTH}; // NORTH
+        cell_list->cells[i] = new_cell; i++;
+    }
+    if (east_cell) {
+        Cell new_cell = {{x_coord+1, y_coord}, EAST};  // EAST
+        cell_list->cells[i] = new_cell; i++;
+    }
+    if (south_cell) {
+        Cell new_cell = {{x_coord, y_coord-1}, SOUTH}; // SOUTH
+        cell_list->cells[i] = new_cell; i++;
+    }
+    if (west_cell) {
+        Cell new_cell = {{x_coord-1, y_coord}, WEST}; // WEST
+        cell_list->cells[i] = new_cell; i++;
+    }
 }
 
 void scanWallsAdjacent(Maze* maze, Coord cur_pos, Direction cur_dir) {
