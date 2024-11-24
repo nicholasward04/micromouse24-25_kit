@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <stdint.h>
 
 #include "API.h"
 
@@ -109,6 +110,7 @@ CellList* getNeighborCells(Maze* maze, Coord* pos) {
         Cell new_cell = {{x_coord-1, y_coord}, WEST}; // WEST
         cell_list->cells[i] = new_cell; i++;
     }
+    return cell_list;
 }
 
 void scanWallsAdjacent(Maze* maze, Coord cur_pos, Direction cur_dir) {
@@ -228,4 +230,44 @@ Direction bestCell(Maze* maze, Coord mouse_pos) {
     return neighbors->cells[best_cell_index].dir;                                                                   // Return direction of lowest cost cell
 }
 
-int main(int argc, char* argv[]) {}
+void mazeInit(Maze* maze) {
+    for (uint8_t x = 0; x < 16; x++) { for (uint8_t y = 0; y < 16; y++) { maze->cellWalls[x][y] = 0; } }            // Initialize all wall values to 0
+    maze->mouse_dir = NORTH;                                                                                        // Mouse starting direction/pos always NORTH/{0,0}
+    maze->mouse_pos = {0,0};
+}
+
+int main(int argc, char* argv[]) {
+    Maze maze;
+    mazeInit(&maze);                                                                                                // Intialize maze
+
+    setGoalCell(&maze, 4);                                                                                          // Set initial goal cells -- center 4 cells
+    while (true) {
+        uint8_t walls_changed = scanWalls(&maze);                                                                   // Update wall information
+        if (walls_changed) { Floodfill(&maze); }                                                                    // Update distance information if walls have been updated
+        updateSimulator(maze);
+
+        Direction best_dir = bestCell(&maze, maze.mouse_pos);                                                       // Get best direction to move to
+
+        if (best_dir == (Direction)((maze.mouse_dir + 1) % 4)) {                                                    // Right turn
+            API::turnRight();
+            maze.mouse_dir = (Direction)((maze.mouse_dir + 1) % 4);
+        }
+        else if (best_dir == (Direction)((maze.mouse_dir + 3) % 4)) {                                               // Left turn
+            API::turnLeft();
+            maze.mouse_dir = (Direction)((maze.mouse_dir + 3) % 4);
+        }
+        else if (best_dir == (Direction)((maze.mouse_dir + 2) % 4)) {                                               // Turn around
+            API::turnLeft();
+            API::turnLeft();
+            maze.mouse_dir = (Direction)((maze.mouse_dir + 2) % 4);
+        }
+
+        API::moveForward();
+        updateMousePos(&maze.mouse_pos, maze.mouse_dir);
+
+        if (maze.distances[maze.mouse_pos.x][maze.mouse_pos.y] == 0) {                                              // Check if mouse has reached the goal position
+            if (maze.goalPos[0].x == 0) { setGoalCell(&maze, 4); }                                                  // Mouse has reached {0,0} goal position
+            else { setGoalCell(&maze, 1); }                                                                         // Mouse has reached center of maze goal position
+        }
+    }
+}
