@@ -174,9 +174,27 @@ void Floodfill(Maze* maze) {
                 queue[tail] = neighbors->cells[neighbor].pos; tail++;
             }
         }
+        free(neighbors->cells); free(neighbors);
     }
 }
 
-Direction bestCell(Coord mouse_pos) {}
+Direction bestCell(Maze* maze, Coord mouse_pos) {
+    CellList* neighbors = getNeighborCells(maze, &mouse_pos);
+
+    uint8_t best_cell_index = 0;
+    uint8_t lowest_cost = maze->distances[mouse_pos.x][mouse_pos.y];
+
+    for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {
+        if ((maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] < lowest_cost) ||  // For each neighbor cell, check if its cost is the lowest seen
+           ((maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] == lowest_cost) && // Or check cost == lowest and the dir of the cell matches that of the mouse (prioritize forward)
+           (maze->mouse_dir == neighbors->cells[neighbor].dir))) {
+                best_cell_index = neighbor;
+                lowest_cost = maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y];  // Update best cell index and lowest cost seen
+           }
+    }
+    free(neighbors->cells); free(neighbors);
+
+    return neighbors->cells[best_cell_index].dir;                                                                   // Return direction of lowest cost cell
+}
 
 int main(int argc, char* argv[]) {}
