@@ -4,9 +4,6 @@
 
 #include "API.h"
 
-void log(const std::string& text) {
-    std::cerr << text << std::endl;
-}
 
 enum Direction {
     NORTH = 0,
@@ -57,21 +54,21 @@ bool offMaze(int mouse_pos_x, int mouse_pos_y) {
 }
 
 void updateSimulator(Maze maze) {                                     // Redraws the simulator based off of current distance and wall values
-    for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-            API::setText(x, y, std::to_string(maze.distances[x][y])); // Update simulator distances
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            API::setText(x, y, std::to_string(maze.distances[y][x])); // Update simulator distances
 
-            if (maze.cellWalls[x][y] & NORTH_MASK) {                  // Update simulator walls
-                API::setWall(y, x, 'n');
+            if (maze.cellWalls[y][x] & NORTH_MASK) {                  // Update simulator walls
+                API::setWall(x, y, 'n');
             }
-            if (maze.cellWalls[x][y] & EAST_MASK) {
-                API::setWall(y, x, 'e');
+            if (maze.cellWalls[y][x] & EAST_MASK) {
+                API::setWall(x, y, 'e');
             }
-            if (maze.cellWalls[x][y] & SOUTH_MASK) {
-                API::setWall(y, x, 's');
+            if (maze.cellWalls[y][x] & SOUTH_MASK) {
+                API::setWall(x, y, 's');
             }
-            if (maze.cellWalls[x][y] & WEST_MASK) {
-                API::setWall(y, x, 'w');
+            if (maze.cellWalls[y][x] & WEST_MASK) {
+                API::setWall(x, y, 'w');
             }
         }
     }
@@ -85,10 +82,10 @@ CellList* getNeighborCells(Maze* maze, Coord* pos) {
     uint8_t num_cells = 0;
 
     // If a cell is adjacent to the cell represented by pos, exists in the 16x16 maze, and is not blocked by a wall, add it to the cell list
-    if (offMaze(x_coord, y_coord+1) && !(maze->cellWalls[x_coord][y_coord] & NORTH_MASK)) { north_cell = true; num_cells++; } // NORTH
-    if (offMaze(x_coord+1, y_coord) && !(maze->cellWalls[x_coord][y_coord] & EAST_MASK)) { east_cell = true; num_cells++; }   // EAST
-    if (offMaze(x_coord, y_coord-1) && !(maze->cellWalls[x_coord][y_coord] & SOUTH_MASK)) { south_cell = true; num_cells++; } // SOUTH
-    if (offMaze(x_coord-1, y_coord) && !(maze->cellWalls[x_coord][y_coord] & WEST_MASK)) { west_cell = true; num_cells++; }   // WEST
+    if (offMaze(x_coord, y_coord+1) && !(maze->cellWalls[y_coord][x_coord] & NORTH_MASK)) { north_cell = true; num_cells++; } // NORTH
+    if (offMaze(x_coord+1, y_coord) && !(maze->cellWalls[y_coord][x_coord] & EAST_MASK)) { east_cell = true; num_cells++; }   // EAST
+    if (offMaze(x_coord, y_coord-1) && !(maze->cellWalls[y_coord][x_coord] & SOUTH_MASK)) { south_cell = true; num_cells++; } // SOUTH
+    if (offMaze(x_coord-1, y_coord) && !(maze->cellWalls[y_coord][x_coord] & WEST_MASK)) { west_cell = true; num_cells++; }   // WEST
 
     cell_list->size = num_cells;
     cell_list->cells = (Cell*)malloc(num_cells*sizeof(Cell)); 
@@ -113,55 +110,62 @@ CellList* getNeighborCells(Maze* maze, Coord* pos) {
     return cell_list;
 }
 
-void scanWallsAdjacent(Maze* maze, Coord cur_pos, Direction cur_dir) {
-    switch (cur_dir) {
-        case NORTH:
-            if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[cur_pos.x][cur_pos.y + 1] |= SOUTH_MASK; }
-            break;
-        case EAST:
-            if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[cur_pos.x + 1][cur_pos.y] |= WEST_MASK; }
-            break;
-        case WEST:
-            if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[cur_pos.x - 1][cur_pos.y] |= EAST_MASK; }
-            break;
-    }
-}
-
 uint8_t scanWalls(Maze* maze) { // Checks wall information based on mouse's current position and updates maze walls. Returns an integer 0-3 depending on # of walls spotted
     Direction cur_dir = maze->mouse_dir;
     Coord cur_pos = maze->mouse_pos;
     uint8_t walls_changed = 0;
 
     if (API::wallFront()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[cur_dir];
-        scanWallsAdjacent(maze, cur_pos, cur_dir); walls_changed += 1;
+        maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[cur_dir];
+        walls_changed += 1;
+        switch (cur_dir) { // Update adjacent walls with relevant wall information
+            case (NORTH):
+                if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[maze->mouse_pos.y + 1][maze->mouse_pos.x] |= SOUTH_MASK; } break;
+            case (EAST):
+                if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x + 1] |= WEST_MASK; }  break;
+            case (SOUTH):
+                if (offMaze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[maze->mouse_pos.y - 1][maze->mouse_pos.x] |= NORTH_MASK; } break;
+            case (WEST):
+                if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x - 1] |= EAST_MASK; }  break;
+        }
     }
     if (API::wallLeft()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[(cur_dir + 3) % 4];
-        scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 3) % 4)); walls_changed += 1;
+        maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[(cur_dir + 3) % 4];
+        walls_changed += 1;
+        switch (cur_dir) {
+            case (NORTH):
+                if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x - 1] |= EAST_MASK; }  break;
+            case (EAST):
+                if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[maze->mouse_pos.y + 1][maze->mouse_pos.x] |= SOUTH_MASK; } break;
+            case (SOUTH):
+                if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x + 1] |= WEST_MASK; }  break;
+            case (WEST):
+                if (offMaze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[maze->mouse_pos.y - 1][maze->mouse_pos.x] |= NORTH_MASK; } break;
+        }
     }
     if (API::wallRight()) {
-        maze->cellWalls[cur_pos.x][cur_pos.y] |= mask_array[(cur_dir + 1) % 4];
-        scanWallsAdjacent(maze, cur_pos, (Direction)((cur_dir + 1) % 4)); walls_changed += 1;
+        maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[(cur_dir + 1) % 4];
+        walls_changed += 1;
+        switch (cur_dir) { 
+            case (NORTH):
+                if (offMaze(cur_pos.x + 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x + 1] |= WEST_MASK; }  break;
+            case (EAST):
+                if (offMaze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[maze->mouse_pos.y - 1][maze->mouse_pos.x] |= NORTH_MASK; } break;
+            case (SOUTH):
+                if (offMaze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x - 1] |= EAST_MASK; }  break;
+            case (WEST):
+                if (offMaze(cur_pos.x, cur_pos.y + 1)) { maze->cellWalls[maze->mouse_pos.y + 1][maze->mouse_pos.x] |= SOUTH_MASK; } break;
+        }
     }
     return walls_changed;
 }
 
-void updateMousePos(Coord *pos, Direction dir) {
-    switch (dir) {
-        case NORTH:
-            pos->x++;
-            break;
-        case SOUTH:
-            pos->x--;
-            break;
-        case WEST:
-            pos->y--;
-            break;
-        case EAST:
-            pos->y++;
-            break;
-    }
+void updateMousePos(Coord *pos, Direction dir)
+{
+    if      (dir == NORTH) { pos->y++; }
+    else if (dir == SOUTH) { pos->y--; }
+    else if (dir == WEST)  { pos->x--; }
+    else if (dir == EAST)  { pos->x++; }
 }
 
 void setGoalCell(Maze* maze, int num_of_goals) {
@@ -175,8 +179,8 @@ void setGoalCell(Maze* maze, int num_of_goals) {
     }
 }
 
-void Floodfill(Maze* maze) {
-    for (uint8_t x=0; x<16; x++) { for (uint8_t y=0; y<16; y++) { maze->distances[x][y] = MAX_COST; } } // Initialize all maze costs/distances to the maximum = 255
+void floodfill(Maze* maze) {
+    for (uint8_t y=0; y<16; y++) { for (uint8_t x=0; x<16; x++) { maze->distances[y][x] = MAX_COST; } } // Initialize all maze costs/distances to the maximum = 255
 
     uint8_t goal_count = 4;
     if (maze->goalPos[0].x == 0) { goal_count = 1; }                                                    // Check if goal is maze center or start cell
@@ -184,7 +188,7 @@ void Floodfill(Maze* maze) {
     Coord queue[MAX_COST];                                                                              // Initialize queue
     uint8_t head = 0, tail = 0;
     for (uint8_t cell = 0; cell < goal_count; cell++) {
-        maze->distances[maze->goalPos[cell].x][maze->goalPos[cell].y] = 0;                              // Set goal cells to cost/distance minimum = 0
+        maze->distances[maze->goalPos[cell].y][maze->goalPos[cell].x] = 0;                              // Set goal cells to cost/distance minimum = 0
         queue[tail] = maze->goalPos[cell]; tail++;                                                      // Add goal cells to queue, increment tail
     }
 
@@ -192,13 +196,13 @@ void Floodfill(Maze* maze) {
     while (head != tail) {
         curr_pos = queue[head];
         head++;
-        uint8_t new_distance = maze->distances[curr_pos.x][curr_pos.y] + 1;                             // Calculate cost for adjacent cells
+        uint8_t new_distance = maze->distances[curr_pos.y][curr_pos.x] + 1;                             // Calculate cost for adjacent cells
 
         CellList* neighbors = getNeighborCells(maze, &curr_pos);
 
         for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {                            // For each neighbor cell, check if its cost/distance is > new distance -- if so, update its value
-            if (maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] > new_distance) {
-                maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] = new_distance;
+            if (maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] > new_distance) {
+                maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] = new_distance;
                 queue[tail] = neighbors->cells[neighbor].pos; tail++;
             }
         }
@@ -210,23 +214,24 @@ Direction bestCell(Maze* maze, Coord mouse_pos) {
     CellList* neighbors = getNeighborCells(maze, &mouse_pos);
 
     uint8_t best_cell_index = 0;
-    uint8_t lowest_cost = maze->distances[mouse_pos.x][mouse_pos.y];
+    uint8_t lowest_cost = maze->distances[mouse_pos.y][mouse_pos.x];
 
     for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {
-        if ((maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] < lowest_cost) ||  // For each neighbor cell, check if its cost is the lowest seen
-           ((maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y] == lowest_cost) && // Or check cost == lowest and the dir of the cell matches that of the mouse (prioritize forward)
+        if ((maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] < lowest_cost) ||  // For each neighbor cell, check if its cost is the lowest seen
+           ((maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] == lowest_cost) && // Or check cost == lowest and the dir of the cell matches that of the mouse (prioritize forward)
            (maze->mouse_dir == neighbors->cells[neighbor].dir))) {
                 best_cell_index = neighbor;
-                lowest_cost = maze->distances[neighbors->cells[neighbor].pos.x][neighbors->cells[neighbor].pos.y];  // Update best cell index and lowest cost seen
+                lowest_cost = maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x];  // Update best cell index and lowest cost seen
            }
     }
+    Direction ret_dir = neighbors->cells[best_cell_index].dir;
     free(neighbors->cells); free(neighbors);
 
-    return neighbors->cells[best_cell_index].dir;                                                                   // Return direction of lowest cost cell
+    return ret_dir;                                                                                                 // Return direction of lowest cost cell
 }
 
 void mazeInit(Maze* maze) {
-    for (uint8_t x = 0; x < 16; x++) { for (uint8_t y = 0; y < 16; y++) { maze->cellWalls[x][y] = 0; } }            // Initialize all wall values to 0
+    for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0; } }            // Initialize all wall values to 0
     maze->mouse_dir = NORTH;                                                                                        // Mouse starting direction/pos always NORTH/{0,0}
     maze->mouse_pos = {0,0};
 }
@@ -234,11 +239,12 @@ void mazeInit(Maze* maze) {
 int main(int argc, char* argv[]) {
     Maze maze;
     mazeInit(&maze);                                                                                                // Intialize maze
+    uint8_t goal_swap = 0;
 
     setGoalCell(&maze, 4);                                                                                          // Set initial goal cells -- center 4 cells
     while (true) {
         uint8_t walls_changed = scanWalls(&maze);                                                                   // Update wall information
-        if (walls_changed) { Floodfill(&maze); }                                                                    // Update distance information if walls have been updated
+        if ((walls_changed > 0) || goal_swap) { floodfill(&maze); goal_swap = 0; }                                  // Update distance information if walls or goal have been updated
         updateSimulator(maze);
 
         Direction best_dir = bestCell(&maze, maze.mouse_pos);                                                       // Get best direction to move to
@@ -260,9 +266,9 @@ int main(int argc, char* argv[]) {
         API::moveForward();
         updateMousePos(&maze.mouse_pos, maze.mouse_dir);
 
-        if (maze.distances[maze.mouse_pos.x][maze.mouse_pos.y] == 0) {                                              // Check if mouse has reached the goal position
+        if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {                                              // Check if mouse has reached the goal position
             if (maze.goalPos[0].x == 0) { setGoalCell(&maze, 4); }                                                  // Mouse has reached {0,0} goal position
-            else { setGoalCell(&maze, 1); }                                                                         // Mouse has reached center of maze goal position
+            else { setGoalCell(&maze, 1); goal_swap = 1;}                                                           // Mouse has reached center of maze goal position
         }
     }
 }
