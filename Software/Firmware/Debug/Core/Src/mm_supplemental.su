@@ -1,1 +1,2 @@
 ../Core/Src/mm_supplemental.c:9:6:LED_Power_Init	8	static
+../Core/Src/mm_supplemental.c:13:6:Reset_Buffers	16	static

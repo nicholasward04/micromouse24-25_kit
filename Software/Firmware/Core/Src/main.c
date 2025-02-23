@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mm_supplemental.h"
+#include "mm_commands.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +50,6 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-uint8_t rxData;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,7 +103,6 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart1, &rxData, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -491,15 +490,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-char data[32];
-uint8_t num = 0;
+uint8_t txData[32];
+uint8_t rxData;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
-		HAL_UART_Receive_IT(&huart1, &rxData, 1);
-		sprintf(&data, "hello world! %u", num);
-		HAL_UART_Transmit(huart, (uint8_t*) data, strlen(data), 1000);
-		num++;
+		Reset_Buffers(rxData, txData);                             // Reset buffers
+		HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));      // Receive incoming command
+
+		Parse_Receive_Data(rxData, txData);                         // Parse incoming command
+		HAL_UART_Transmit_IT(&huart1, txData, sizeof(txData));      // Transmit response code
 	}
 }
 /* USER CODE END 4 */
