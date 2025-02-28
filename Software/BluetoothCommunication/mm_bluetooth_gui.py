@@ -5,7 +5,9 @@
 import tkinter as tk
 import tkinter.font as tkFont
 from time import time
-from mm_bluetooth_parse import command_line_parse, c
+from mm_bluetooth_parse import command_line_parse, c, receive_and_update
+from mm_maze_translation import MAZE_FILE_NAME
+import mm_params as param
 
 root = tk.Tk()
 root.title("Micromouse Communication GUI")
@@ -91,10 +93,23 @@ command_history_scrollbar.grid(row=1, column=2, sticky="ns")
 
 # Data Frame
 
+def data_frame_update(motor_1, motor_2, batt, pos, dir):
+    motor_1_rpm_value.delete(0, tk.END)
+    motor_2_rpm_value.delete(0, tk.END)
+    batt_voltage_value.delete(0, tk.END)
+    mouse_position_value.delete(0, tk.END)
+    mouse_direction_value.delete(0, tk.END)
+
+    motor_1_rpm_value.insert(0, f"{motor_1}")
+    motor_2_rpm_value.insert(0, f"{motor_2}")
+    batt_voltage_value.insert(0, f"{batt}")
+    mouse_position_value.insert(0, f"{pos[0]}, {pos[1]}")
+    mouse_direction_value.insert(0, f"{dir}")
+
 data_frame = tk.Frame(root, relief=tk.SUNKEN, bd=1)
 data_frame.grid(row=1, column=0, sticky="nsew", padx=(50, 25), pady=(0, 15))
 
-data_frame.columnconfigure((0,1,2,3), weight=0)
+data_frame.columnconfigure((0,1,2,3,4,5), weight=0)
 data_frame.rowconfigure((0,1), weight=0)
 
 motor_1_rpm = tk.Label(data_frame, text="Motor 1 RPM:")
@@ -107,19 +122,24 @@ motor_2_rpm.grid(row=1, column=0, sticky="nw", padx=(10, 5), pady=(5, 0))
 motor_2_rpm_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
 motor_2_rpm_value.grid(row=1, column=1, stick="nw", pady=(5, 0))
 
-batt_voltage = tk.Label(data_frame, text="Battery (V):")
-batt_voltage.grid(row=0, column=2, sticky="nw", padx=(10, 5), pady=(5, 0))
-batt_voltage_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
-batt_voltage_value.grid(row=0, column=3, stick="nw", pady=(5, 0))
+
+mouse_direction = tk.Label(data_frame, text="Direction:")
+mouse_direction.grid(row=0, column=2, sticky="nw", padx=(10, 5), pady=(5, 0))
+mouse_direction_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+mouse_direction_value.grid(row=0, column=3, stick="nw", pady=(5, 0))
 
 mouse_position = tk.Label(data_frame, text="Position (X, Y):")
 mouse_position.grid(row=1, column=2, sticky="nw", padx=(10, 5), pady=(5, 0))
 mouse_position_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
 mouse_position_value.grid(row=1, column=3, stick="nw", pady=(5, 0))
 
+batt_voltage = tk.Label(data_frame, text="Battery (V):")
+batt_voltage.grid(row=0, column=4, sticky="nw", padx=(10, 5), pady=(5, 0))
+batt_voltage_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+batt_voltage_value.grid(row=0, column=5, stick="nw", pady=(5, 0))
+
 # Quick Command Frame
 
-debugMode = 0
 logName = "mm_command_log.txt"
 
 def stopButton_Handler():
@@ -134,8 +154,7 @@ def saveCommandLog_Handler():
                 log_file.write(line.strip(" ") + "\n")
 
 def mouseMode_Handler():
-    global debugMode
-    debugMode = (debugMode + 1) % 2
+    param.debugMode = (param.debugMode + 1) % 2
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.SET_MODE), "INCOMING")
 
@@ -154,3 +173,21 @@ stop_operation_button.grid(row=1, column=0, sticky="nw", pady=(5,0))
 save_command_log_button = tk.Button(quick_command_frame, text="Save Log", command=saveCommandLog_Handler)
 save_command_log_button.grid(row=2, column=0, sticky="nw", pady=(5,0))
 
+# Update data every 10 milliseconds (may change)
+
+WAIT_TIME = 10
+
+def update_display():
+    if param.debugMode:
+        print("Entered as expected")
+        # Update maze
+
+        # Update parameter values
+        data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)
+
+    root.after(WAIT_TIME, receive_and_update)
+    root.after(WAIT_TIME, update_display)
+    
+
+root.after(WAIT_TIME, receive_and_update)
+root.after(WAIT_TIME, update_display)

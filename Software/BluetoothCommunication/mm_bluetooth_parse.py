@@ -2,6 +2,8 @@
 # Will parse incoming data and format it for the GUI to display.
 # Will translate outgoing commands to the specified formats.
 
+import mm_params as param
+
 command_dict = {"SET_MODE": 0b0000, "HALT_RUN": 0b0001, "READ_BATT": 0b0010, "PULSE_BUZZ": 0b0011, "START_RUN": 0b0100, "PAIRED": 0b0101}
 
 class c():
@@ -45,3 +47,13 @@ def command_line_parse(command):
             response = "Invalid Command"
 
     return response
+
+def receive_and_update(ACK=None):
+    if param.debugMode:
+        print("Works as expected")
+    if ACK:
+        print("ACK Entered")
+        # For commands that are not debug mode, will wait a period of time and if ACK received display in command history, otherwise timeout and display failed ACK
+    # Called every 10ms.
+    # Receive sent data, if any
+    # Update variables in memory, in the case of a maze, translate it into a file

@@ -1,0 +1,9 @@
+# Global parameters
+
+MOTOR_1_RPM = 0
+MOTOR_2_RPM = 0
+BATTERY_VOLTAGE = 0
+MOUSE_POSITION = [0, 0]
+MOUSE_DIRECTION = "NORTH"
+
+debugMode = 0
