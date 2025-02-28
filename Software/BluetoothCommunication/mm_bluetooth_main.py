@@ -2,8 +2,7 @@
 # Using the PyBluez library to implement bluetooth features.
 # Using the tkinter library to implement user interface.
 
-from mm_bluetooth_gui   import *
-from mm_bluetooth_parse import *
+from mm_bluetooth_gui import *
 
 def main():
     root.mainloop()

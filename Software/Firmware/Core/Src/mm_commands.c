@@ -13,6 +13,7 @@
 #define READ_BATT   0b0010  // READ BATTERY: Read battery voltage.
 #define PULSE_BUZZ  0b0011  // PULSE BUZZER: Play a short noise from the buzzer.
 #define START_RUN   0b0100  // START RUN: Start a maze run. For testing purposes only.
+#define PAIRED      0b0101  // PAIRED: Send OK response to verify received.
 
 void Parse_Receive_Data(uint8_t rxBuff, uint8_t *txBuff) {
 	uint8_t command = (rxBuff & 0xF0) >> 4;   // Isolate command code
@@ -27,6 +28,8 @@ void Parse_Receive_Data(uint8_t rxBuff, uint8_t *txBuff) {
 		case PULSE_BUZZ:
 			break;
 		case START_RUN:
+			break;
+		case PAIRED:
 			break;
 		default:
 			txBuff = (uint8_t*) "INVALID COMMAND";
