@@ -37,5 +37,23 @@ void Parse_Receive_Data(uint8_t rxBuff, uint8_t *txBuff) {
 	}
 }
 
+uint8_t maze[9] = {{1101, 1011, 1100}, {0101, 1101, 0101}, {0110, 0010, 0110}};
+uint16_t motor_1_rpm = 2048;
+uint16_t motor_2_rpm = 2048;
+uint8_t direction = 1;
+uint8_t position = 0b00010010; // First 4 bits is x position, last 4 bits is y position
+double battery_volt = 8.43;
+
+// When mouse in debug mode, transmit maze (256 bytes), motor 1 rpm (2 bytes), motor 2 rpm (2 bytes), direction (1 byte), position (1 byte), and battery voltage (8 bytes).
+// Also transmit start identifier "Debug". This totals to 275 bytes of data transmitted every 100 ms.
+void Debug_Packet_Send() {
+	uint8_t txData[275];
+
+	sprintf
+
+
+	HAL_UART_Transmit_IT(&huart1, txData, sizeof(txData));      // Transmit maze data
+}
+
 // Write functions to carry out the commands (some can't be defined as of now). Return an ERR code for each function.
 // Store the ERR code in the transmit buffer.

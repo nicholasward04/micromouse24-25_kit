@@ -495,7 +495,7 @@ uint8_t rxData;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
-		Reset_Buffers(rxData, txData);                             // Reset buffers
+		Reset_Buffers(rxData, txData);                              // Reset buffers
 		HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));      // Receive incoming command
 
 		Parse_Receive_Data(rxData, txData);                         // Parse incoming command
