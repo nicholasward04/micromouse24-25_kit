@@ -4,7 +4,6 @@
 
 #include "API.h"
 
-
 enum Direction {
     NORTH = 0,
     EAST = 1,

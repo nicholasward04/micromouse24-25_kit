@@ -10,8 +10,8 @@ void LED_Power_Init() {
 	HAL_GPIO_TogglePin(LED_Power_GPIO_Port, LED_Power_Pin);
 }
 
-void Reset_Buffers(uint8_t rxBuff, uint8_t *txBuff) {
-	bzero(&rxBuff, sizeof(rxBuff));
-	bzero (txBuff, sizeof(txBuff));
+void Reset_Buffers(uint8_t rxBuff, uint8_t txBuff) {
+	rxBuff = 0;
+	txBuff = 0;
 }
 

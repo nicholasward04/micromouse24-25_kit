@@ -7,6 +7,8 @@
 #ifndef INC_MM_COMMANDS_H_
 #define INC_MM_COMMANDS_H_
 
-void Parse_Receive_Data(uint8_t rxBuff, uint8_t *txBuff);
+void Parse_Receive_Data(uint8_t rxBuff);
+void Debug_Packet_Send();
+void Create_Byte_Stream(uint8_t txData[275]);
 
 #endif /* INC_MM_COMMANDS_H_ */

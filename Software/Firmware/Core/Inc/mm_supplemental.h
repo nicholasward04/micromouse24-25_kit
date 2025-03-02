@@ -7,6 +7,6 @@
 #define INC_MM_SUPPLEMENTAL_H_
 
 void LED_Power_Init();
-void Reset_Buffers(uint8_t rxBuff, uint8_t *txBuff);
+void Reset_Buffers(uint8_t rxBuff, uint8_t txBuff);
 
 #endif

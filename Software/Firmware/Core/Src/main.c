@@ -66,7 +66,11 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+uint8_t txData = 0xFF;
+uint8_t rxData = 0;
 
+uint8_t debugMode = 0;
+uint8_t debugCounter;
 /* USER CODE END 0 */
 
 /**
@@ -103,6 +107,8 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,7 +116,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -490,16 +495,12 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-uint8_t txData[32];
-uint8_t rxData;
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
-		Reset_Buffers(rxData, txData);                              // Reset buffers
-		HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));      // Receive incoming command
-
-		Parse_Receive_Data(rxData, txData);                         // Parse incoming command
-		HAL_UART_Transmit_IT(&huart1, txData, sizeof(txData));      // Transmit response code
+		Parse_Receive_Data(rxData);
+		HAL_UART_Transmit_IT(&huart1, &txData, sizeof(txData));      // Transmit response ACK (0xFF)                          // Parse incoming command
+		HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));       // Receive incoming command
 	}
 }
 /* USER CODE END 4 */

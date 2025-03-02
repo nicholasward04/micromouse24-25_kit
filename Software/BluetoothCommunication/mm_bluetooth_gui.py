@@ -1,11 +1,10 @@
 # File for the implementation of a GUI for sending commands through a terminal interface,
 # receiving incoming data, displaying incoming data, and writing it to local files.
-#
 
 import tkinter as tk
 import tkinter.font as tkFont
 from time import time
-from mm_bluetooth_parse import command_line_parse, c, receive_and_update
+from mm_bluetooth_parse import command_line_parse, c, receive_and_update, bluetooth_connect, bluetooth_disconnect
 from mm_maze_translation import MAZE_FILE_NAME
 import mm_params as param
 
@@ -78,11 +77,11 @@ terminal_frame.columnconfigure(1, weight=1)
 terminal_frame.rowconfigure(0, weight=1)
 terminal_frame.rowconfigure(1, weight=10)
 
-command_line = tk.Entry(terminal_frame, relief=tk.SUNKEN, bd=2)
+command_line = tk.Entry(terminal_frame, relief=tk.SUNKEN, bd=2, state='disabled')
 command_line.bind("<Return>", commandLine_Handler)
 command_line.grid(row=0, column=0, sticky="ew")
 
-command_line_send = tk.Button(terminal_frame, text="SEND", command=commandLine_Handler)
+command_line_send = tk.Button(terminal_frame, text="SEND", command=commandLine_Handler, state='disabled')
 command_line_send.grid(row=0, column=1, sticky="ew")
 
 command_history_scrollbar = tk.Scrollbar(terminal_frame, orient=tk.VERTICAL)
@@ -154,40 +153,135 @@ def saveCommandLog_Handler():
                 log_file.write(line.strip(" ") + "\n")
 
 def mouseMode_Handler():
-    param.debugMode = (param.debugMode + 1) % 2
+    param.MODE = (param.MODE + 1) % 2
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.SET_MODE), "INCOMING")
+    toggleCommandLine(param.MODE)
+    
+
+def enableAll(err):
+    if err == "OK":
+        param.PAIRED = True
+        mouse_mode_button.configure(state="normal")
+        stop_operation_button.configure(state="normal")
+        save_command_log_button.configure(state="normal")
+        command_line_send.configure(state="normal")
+        command_line.configure(state="normal")
+        bl_disc_button.configure(state="normal")
+        bl_pair_label.configure(text="    Paired    ")
+
+        bl_pair_button.config(state='disabled')
+
+def disableAll():
+    param.MODE = 0
+    mouse_mode_button.deselect()
+    mouse_mode_button.configure(state="disable")
+    stop_operation_button.configure(state="disable")
+    save_command_log_button.configure(state="disable")
+    command_line_send.configure(state="disable")
+    command_line.configure(state="disable")
+    bl_disc_button.configure(state="disable")
+
+def toggleCommandLine(mode):
+    if mode:
+        command_line.config(state="disabled")
+        command_line_send.config(state="disabled")
+    else:
+        command_line.config(state="normal")
+        command_line_send.config(state="normal")
+
+def bluetoothPairing_Handler():
+    command_history_write("PAIRING REQUEST", "OUTGOING")
+    temp_port = bl_pair_entry.get()
+    if temp_port == f"COMPORT (def={param.DEF_PORT})":
+        temp_port = param.DEF_PORT
+    try:
+        temp_port = int(temp_port)
+        param.PORT = temp_port
+    except ValueError:
+        temp_port = f'"{temp_port}" is not a valid port number'
+        command_history_write(temp_port, "INCOMING")
+        return
+    
+    err = bluetooth_connect()
+    command_history_write(err, "INCOMING")
+    enableAll(err)
+
+def bluetoothDisconnect_Handler():
+    if (param.MODE == 1): # Ensure debug mode is disabled on mouse before disconnecting
+        param.SOCKET.flushOutput()
+        param.SOCKET.flushInput()
+        command_history_write(command_line_parse("SET_MODE") + ": Disabled debug mode on mouse", "INCOMING")
+    command_history_write("DISCONNECT", "OUTGOING")
+    bluetooth_disconnect()
+
+    disableAll()
+    param.SOCKET = 0
+    param.PAIRED = False
+    bl_pair_label.config(text="Not Paired")
+    bl_pair_button.config(state='normal')
+
+def focusIn(event=None):
+    print("IN")
+    if bl_pair_entry.get() == f"COMPORT (def={param.DEF_PORT})":
+        bl_pair_entry.delete(0, tk.END)
+        bl_pair_entry.config(fg="black")
+
+def focusOut(event=None):
+    print("OUT")
+    if bl_pair_entry.get() == "":
+        bl_pair_entry.insert(0, f"COMPORT (def={param.DEF_PORT})")
+        bl_pair_entry.config(fg="gray")
 
 quick_command_frame = tk.Frame(root)
-quick_command_frame.grid(row=1, column=1, sticky="nsew")
+quick_command_frame.grid(row=1, column=1, sticky="nsew", pady=(0, 25))
 
-quick_command_frame.columnconfigure(0, weight=1)
+quick_command_frame.columnconfigure((0,1,2,3), weight=0)
 quick_command_frame.rowconfigure((0,1,2), weight=0)
+quick_command_frame.rowconfigure(3, weight=1)
 
-mouse_mode_button = tk.Checkbutton(quick_command_frame, command=mouseMode_Handler, text="Debug Mode")
+mouse_mode_button = tk.Checkbutton(quick_command_frame, command=mouseMode_Handler, text="Debug Mode", state='disabled')
 mouse_mode_button.grid(row=0, column=0, sticky="nw", pady=(0,0))
 
-stop_operation_button = tk.Button(quick_command_frame, text="Stop Operation", command=stopButton_Handler)
+stop_operation_button = tk.Button(quick_command_frame, text="Stop Operation", command=stopButton_Handler, state='disabled')
 stop_operation_button.grid(row=1, column=0, sticky="nw", pady=(5,0))
 
-save_command_log_button = tk.Button(quick_command_frame, text="Save Log", command=saveCommandLog_Handler)
+save_command_log_button = tk.Button(quick_command_frame, text="Save Log", command=saveCommandLog_Handler, state='disabled')
 save_command_log_button.grid(row=2, column=0, sticky="nw", pady=(5,0))
 
-# Update data every 10 milliseconds (may change)
+bl_pair_button = tk.Button(quick_command_frame, text="Pair Device", command=bluetoothPairing_Handler)
+bl_pair_button.grid(row=3, column=0, sticky="sw", pady=(5,0))
 
-WAIT_TIME = 10
+bl_pair_entry = tk.Entry(quick_command_frame, fg="gray")
+bl_pair_entry.insert(0, f"COMPORT (def={param.PORT})")
+bl_pair_entry.grid(row=3, column=1, sticky="sw", pady=(5,0))
+
+bl_pair_label = tk.Label(quick_command_frame, text="Not Paired")
+bl_pair_label.grid(row=3, column=2, sticky='sw', pady=(5,0), padx=(5,0))
+
+bl_disc_button = tk.Button(quick_command_frame, text="Disconnect", state="disabled", command=bluetoothDisconnect_Handler)
+bl_disc_button.grid(row=3, column=3, sticky='sw', pady=(5,0), padx=(5,0))
+
+bl_pair_entry.bind("<FocusIn>", focusIn)
+bl_pair_entry.bind("<FocusOut>", focusOut)
+
+# Update data every 100 milliseconds (may change)
 
 def update_display():
-    if param.debugMode:
-        print("Entered as expected")
+    if param.MODE:
         # Update maze
-
         # Update parameter values
         data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)
 
-    root.after(WAIT_TIME, receive_and_update)
-    root.after(WAIT_TIME, update_display)
+    root.after(param.WAIT_TIME, receive_and_update)
+    root.after(param.WAIT_TIME, update_display)
     
 
-root.after(WAIT_TIME, receive_and_update)
-root.after(WAIT_TIME, update_display)
+root.after(param.WAIT_TIME, receive_and_update)       # Alternative to adding a thread constantly listening
+root.after(param.WAIT_TIME, update_display)
+
+def on_close():
+    if param.SOCKET != 0:                             # If still paired, disconnect
+        bluetoothDisconnect_Handler()
+    root.quit()
+root.protocol("WM_DELETE_WINDOW", on_close)
