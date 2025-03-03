@@ -52,7 +52,7 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 uint8_t maze[3][3] = {{0b1101, 0b1011, 0b1100}, {0b0101, 0b1101, 0b0101}, {0b0110, 0b0010, 0b0110}};
 uint16_t motor_1_rpm = 2048;
 uint16_t motor_2_rpm = 2048;
-uint8_t direction = 1;
+uint8_t direction = 1;         // East
 uint8_t position = 0b00010010; // First 4 bits is x position, last 4 bits is y position (1, 2)
 double battery_volt = 8.43;
 
@@ -60,7 +60,7 @@ void Create_Byte_Stream(uint8_t txData[275]) {
 	bzero(txData, 275);
 
 	memcpy(txData, "Debug", 5);
-	memcpy(txData + 5, maze, 9);
+	memcpy(txData + 5, maze, 9);                    // Once confirmed to work, change to memcpy actual 16x16 maze array
 	memset(txData + 14, 0, 256 - 9);
 	txData[261] = (uint8_t)(motor_1_rpm >> 8);      // High byte
 	txData[262] = (uint8_t)(motor_1_rpm & 0xFF);    // Low byte

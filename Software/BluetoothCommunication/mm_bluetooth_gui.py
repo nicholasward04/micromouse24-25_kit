@@ -4,7 +4,7 @@
 import tkinter as tk
 import tkinter.font as tkFont
 from time import time
-from mm_bluetooth_parse import command_line_parse, c, receive_and_update, bluetooth_connect, bluetooth_disconnect
+from mm_bluetooth_parse import command_line_parse, c, receive_and_update, bluetooth_connect, bluetooth_disconnect, flush_buffers
 from mm_maze_translation import MAZE_FILE_NAME
 import mm_params as param
 
@@ -209,8 +209,7 @@ def bluetoothPairing_Handler():
 
 def bluetoothDisconnect_Handler():
     if (param.MODE == 1): # Ensure debug mode is disabled on mouse before disconnecting
-        param.SOCKET.flushOutput()
-        param.SOCKET.flushInput()
+        flush_buffers()
         command_history_write(command_line_parse("SET_MODE") + ": Disabled debug mode on mouse", "INCOMING")
     command_history_write("DISCONNECT", "OUTGOING")
     bluetooth_disconnect()
@@ -222,13 +221,11 @@ def bluetoothDisconnect_Handler():
     bl_pair_button.config(state='normal')
 
 def focusIn(event=None):
-    print("IN")
     if bl_pair_entry.get() == f"COMPORT (def={param.DEF_PORT})":
         bl_pair_entry.delete(0, tk.END)
         bl_pair_entry.config(fg="black")
 
 def focusOut(event=None):
-    print("OUT")
     if bl_pair_entry.get() == "":
         bl_pair_entry.insert(0, f"COMPORT (def={param.DEF_PORT})")
         bl_pair_entry.config(fg="gray")

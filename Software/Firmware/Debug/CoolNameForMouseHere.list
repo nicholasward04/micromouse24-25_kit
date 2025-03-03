@@ -1240,7 +1240,7 @@ void Create_Byte_Stream(uint8_t txData[275]) {
  80007c6:	4926      	ldr	r1, [pc, #152]	@ (8000860 <Create_Byte_Stream+0xb4>)
  80007c8:	6878      	ldr	r0, [r7, #4]
  80007ca:	f003 fa6f 	bl	8003cac <memcpy>
-	memcpy(txData + 5, maze, 9);
+	memcpy(txData + 5, maze, 9);                    // Once confirmed to work, change to memcpy actual 16x16 maze array
  80007ce:	687b      	ldr	r3, [r7, #4]
  80007d0:	3305      	adds	r3, #5
  80007d2:	4924      	ldr	r1, [pc, #144]	@ (8000864 <Create_Byte_Stream+0xb8>)
