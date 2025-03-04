@@ -192,7 +192,7 @@ void SysTick_Handler(void)
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
   if (debugMode) {
-	  debugCounter = (debugCounter + 1) % 250;
+	  debugCounter = (debugCounter + 1) % 100;
 	  if (debugCounter == 0) {
 		  Debug_Packet_Send();
 	  }

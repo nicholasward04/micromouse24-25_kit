@@ -5,7 +5,7 @@ import tkinter as tk
 import tkinter.font as tkFont
 from time import time
 from mm_bluetooth_parse import command_line_parse, c, receive_and_update, bluetooth_connect, bluetooth_disconnect, flush_buffers
-from mm_maze_translation import MAZE_FILE_NAME
+from mm_maze_translation import translate_maze
 import mm_params as param
 
 root = tk.Tk()
@@ -17,6 +17,15 @@ root.rowconfigure(0, weight=5)
 root.rowconfigure(1, weight=1)
 
 # Maze frame
+
+def maze_frame_update(maze_sect, pos, dir):
+    # Insert localized maze data into maze file
+    translate_maze(maze_sect, pos, dir)
+    # Print maze file line by line to maze frame
+    maze_load.delete(0, tk.END)
+    with open(param.MAZE_FILE_PATH, 'r') as maze:
+        for row in maze:
+            maze_load.insert(0, row.strip("\n")) # Figure out spacing after testing that this works
 
 maze_frame = tk.Frame(root)
 maze_frame.grid(row=0, column=0, sticky="nsew")
@@ -46,6 +55,7 @@ def commandLine_Handler(event=None):
     if text:
         command_history_write(text, "OUTGOING")
         command_history_write(command_line_parse(text), "INCOMING")
+        command_history_write(str(param.BATTERY_VOLTAGE), "INCOMING")
         command_line.delete(0, tk.END)
 
 def command_history_write(write_data, direction):
@@ -139,15 +149,13 @@ batt_voltage_value.grid(row=0, column=5, stick="nw", pady=(5, 0))
 
 # Quick Command Frame
 
-logName = "mm_command_log.txt"
-
 def stopButton_Handler():
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.HALT_RUN), "INCOMING")
 
 def saveCommandLog_Handler():
     write_data = command_history.get(0, tk.END)
-    with open(logName, 'w') as log_file:
+    with open(param.LOG_PATH, 'w') as log_file:
         if write_data:
             for line in reversed(write_data):
                 log_file.write(line.strip(" ") + "\n")
@@ -156,7 +164,7 @@ def mouseMode_Handler():
     param.MODE = (param.MODE + 1) % 2
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.SET_MODE), "INCOMING")
-    toggleCommandLine(param.MODE)
+    toggleCommandLine(param.MODE) # TEST REMOVING THIS
     
 
 def enableAll(err):
@@ -262,13 +270,12 @@ bl_disc_button.grid(row=3, column=3, sticky='sw', pady=(5,0), padx=(5,0))
 bl_pair_entry.bind("<FocusIn>", focusIn)
 bl_pair_entry.bind("<FocusOut>", focusOut)
 
-# Update data every 100 milliseconds (may change)
+# Attempt update data every 50 milliseconds (can be changed in mm_params.py)
 
 def update_display():
     if param.MODE:
-        # Update maze
-        # Update parameter values
-        data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)
+        maze_frame_update(param.MAZE_SECTION, param.MOUSE_POSITION, param.MOUSE_DIRECTION)                                              # Update maze
+        data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)     # Update parameter values
 
     root.after(param.WAIT_TIME, receive_and_update)
     root.after(param.WAIT_TIME, update_display)

@@ -9,6 +9,7 @@
 
 void Parse_Receive_Data(uint8_t rxBuff);
 void Debug_Packet_Send();
-void Create_Byte_Stream(uint8_t txData[275]);
+void Create_Byte_Stream(uint8_t txData[24]);
+void UART_Receive_Callback(UART_HandleTypeDef *huart);
 
 #endif /* INC_MM_COMMANDS_H_ */

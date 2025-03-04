@@ -6,7 +6,6 @@
 import mm_params as param
 import serial
 import struct
-from re import sub
 
 command_dict = {"SET_MODE": 0b0000, "HALT_RUN": 0b0001, "READ_BATT": 0b0010, "PULSE_BUZZ": 0b0011, "START_RUN": 0b0100, "PAIRED": 0b0101}
 
@@ -51,37 +50,7 @@ def translate_command(command):
 
     return output
 
-def command_line_parse(command):
-    translation = command
-    if type(command) is str:
-        translation = translate_command(command.split()[0])
-
-    response = ""
-    match translation:
-        case c.SET_MODE:
-            bluetooth_send(create_byte(c.SET_MODE, c.EMPTY_DATA))
-            flush_buffers()
-            response = response_parse(bluetooth_receive(param.ACK_SIZE)) 
-        case c.HALT_RUN:
-            response = "stop OK"
-        case c.RESUME_RUN:
-            response = "resume OK"
-        case c.READ_BATT:
-            response = "batt OK"
-        case c.PULSE_BUZZ:
-            response = "pulse OK"
-        case c.START_RUN:
-            response = "start OK"
-        case c.PAIRED:
-            bluetooth_send(create_byte(c.PAIRED, c.EMPTY_DATA))
-            response = response_parse(bluetooth_receive(param.ACK_SIZE))
-        case "FLUSH": # Clientside only
-            flush_buffers()
-            response = "OK"
-        case _:
-            response = "Invalid Command"
-
-    return response
+# Bluetooth functions
 
 def bluetooth_connect():
     try:
@@ -108,22 +77,110 @@ def bluetooth_receive(bytes_expected):
         return data
     except Exception as e:
         return "ERROR when attempting to receive data"
+    
+# Command functions
 
-def receive_and_update(ACK=None):
+def set_mode():
+    bluetooth_send(create_byte(c.SET_MODE, c.EMPTY_DATA))
+    flush_buffers()
+    response = response_parse(bluetooth_receive(param.ACK_SIZE)) 
+
+    return response
+
+def halt_run():
+    bluetooth_send(create_byte(c.HALT_RUN, c.EMPTY_DATA))
+    flush_buffers()
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
+    if response == "OK":
+        param.HALTED = True
+
+    return response
+
+def resume_run():
+    bluetooth_send(create_byte(c.RESUME_RUN, c.EMPTY_DATA))
+    flush_buffers()
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
+    if response == "OK":
+        param.HALTED = False
+
+    return response
+
+def read_batt():
+    bluetooth_send(create_byte(c.READ_BATT, c.EMPTY_DATA))
+    flush_buffers()
+    ack_data = bluetooth_receive(param.ACK_SIZE + 8) # Byte size of double=8
+    response = response_parse(ack_data)
+    param.BATTERY_VOLTAGE = struct.unpack('<d', ack_data[2:])[0]
+    from mm_bluetooth_gui import command_history_write # Delayed import for circular import
+    command_history_write(command_line_parse(str(param.BATTERY_VOLTAGE) + "V"), "INCOMING")
+
+    return response
+
+def pulse_buzz():
+    bluetooth_send(create_byte(c.PULSE_BUZZ, c.EMPTY_DATA))
+    flush_buffers()
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
+
+    return response
+
+def start_run():
+    bluetooth_send(create_byte(c.START_RUN, c.EMPTY_DATA))
+    flush_buffers()
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
+
+    return response
+
+def flush():
+    flush_buffers()
+    
+    return "OK"
+ 
+def command_line_parse(command):
+    translation = command
+    if type(command) is str:
+        translation = translate_command(command.split()[0])
+
+    response = ""
+    match translation:
+        case c.SET_MODE:
+            response = set_mode()
+        case c.HALT_RUN:
+            response = halt_run()
+        case c.RESUME_RUN:
+            response = resume_run()
+        case c.READ_BATT:
+            response = read_batt()
+        case c.PULSE_BUZZ:
+            response = pulse_buzz()
+        case c.START_RUN:
+            response = start_run()
+        case c.PAIRED:
+            bluetooth_send(create_byte(c.PAIRED, c.EMPTY_DATA))
+            response = response_parse(bluetooth_receive(param.ACK_SIZE))
+        case "FLUSH": # Clientside only
+            response = flush()
+        case _:
+            response = "Invalid Command"
+
+    return response
+
+def receive_and_update():
     if param.MODE:
         data = bluetooth_receive(param.DEBUG_SIZE)
         data = realign_packet(data)
-        specifier = data[:5].decode('ascii')
+        try:
+            specifier = data[:5].decode('ascii')
+        except Exception as e:
+            return
         if specifier == "Debug":
-            # Extract maze
-            param.MAZE = []
-            for i in range(16):
-                row = list(data[5+i*16:5+(i+1)*16])
-                param.MAZE.append(row)
+            # Extract localized maze
+            param.MAZE_SECTION = []
+            for i in range(5):
+                param.MAZE_SECTION.append(struct.unpack('B', bytes([data[5+i]]))[0])
             # Extract other data
-            param.MOTOR_1_RPM = struct.unpack('>H', data[261:263])[0]
-            param.MOTOR_2_RPM = struct.unpack('>H', data[263:265])[0]
-            param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[265]]))[0]]
-            param.MOUSE_POSITION = struct.unpack('B', bytes([data[266]]))[0]
+            param.MOTOR_1_RPM = struct.unpack('>H', data[10:12])[0]
+            param.MOTOR_2_RPM = struct.unpack('>H', data[12:14])[0]
+            param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[14]]))[0]]
+            param.MOUSE_POSITION = struct.unpack('B', bytes([data[15]]))[0]
             param.MOUSE_POSITION = [(param.MOUSE_POSITION >> 4) & 0x0F, param.MOUSE_POSITION & 0x0F]
-            param.BATTERY_VOLTAGE = struct.unpack('<d', data[267:])[0]
+            param.BATTERY_VOLTAGE = struct.unpack('<d', data[16:])[0]

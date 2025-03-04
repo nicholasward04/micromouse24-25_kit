@@ -2,7 +2,7 @@
 
 DIRECTIONS = ["NORTH", "EAST", "SOUTH", "WEST"]
 
-MAZE = []
+MAZE_SECTION = []
 
 MOTOR_1_RPM = 0
 MOTOR_2_RPM = 0
@@ -26,3 +26,11 @@ ACK = "ff"
 PAIRED = False
 MODE = 0                           # 0 NORMAL MODE, 1 DEBUG MODE
 HALTED = False
+
+LOG_PATH = "Logs/mm_command_log.txt"
+
+MAZE_DIR = "Logs/Mazes/"
+MAZE_PREFIX = "mm_maze_log_"
+MAZE_NUM = -1
+MAZE_SUFFIX = ".txt"
+MAZE_FILE_PATH = MAZE_DIR + MAZE_PREFIX + str(MAZE_NUM) + MAZE_SUFFIX

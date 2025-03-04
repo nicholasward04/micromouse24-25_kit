@@ -3,7 +3,9 @@
 # subsequentally loaded into the maze display on the GUI. This will also allow
 # for loading local maze files.
 
-MAZE_FILE_NAME = "mm_maze_log.txt"
+import os
+from re import match
+import mm_params as param
 
 # Each row of the mouse should be 8 bytes * 32 rows = 256 bytes
 # Each horizontal wall (North, South) should translate to ----
@@ -18,6 +20,30 @@ MAZE_FILE_NAME = "mm_maze_log.txt"
 #       |              |
 #       o----o----o----o
 
-def translate_maze(byte_stream):
+ROW_EVEN = "o    " * 15 + "o" + "\n"
+ROW_ODD  = " " * 76 + "\n"
+
+def update_maze_path():
+    files = os.listdir(param.MAZE_DIR)
+    prefix_match_files = []
+    for file in files:
+        if file.startswith(param.MAZE_PREFIX):
+            prefix_match_files.append(file)
+    param.MAZE_NUM = 0
+    for file in prefix_match_files:
+        param.MAZE_NUM = str(int(match(rf"{param.MAZE_PREFIX}(\d+)", file).group(1)) + 1)
+
+    param.MAZE_FILE_PATH = param.MAZE_DIR + param.MAZE_PREFIX + str(param.MAZE_NUM) + param.MAZE_SUFFIX
+
+def create_maze_file():
+    with open(param.MAZE_FILE_PATH, 'w') as maze:
+        for i in range(33):
+            maze.write(ROW_EVEN) if i % 2 == 0 else maze.write(ROW_ODD)
+
+def translate_maze(loc_maze, pos, dir):
+    if param.MAZE_NUM < 0:
+        update_maze_path()
+        create_maze_file()
+    # Maze data received as [CURR_BYTE, NORTH_BYTE, EAST_BYTE, SOUTH_BYTE, WEST_BYTE]
     print("translate maze entered")
     # Determine how received data is formatted, whether a stream of bytes or an array of streams of bytes
