@@ -130,6 +130,16 @@ def start_run():
 
     return response
 
+def paired():
+    bluetooth_send(create_byte(c.PAIRED, c.EMPTY_DATA))
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
+
+    if response_parse(response) != "OK":
+        from mm_bluetooth_gui import bluetoothDisconnect_Handler # Delayed import for circular import
+        bluetoothDisconnect_Handler()
+
+    return response
+
 def flush():
     flush_buffers()
     
@@ -155,8 +165,7 @@ def command_line_parse(command):
         case c.START_RUN:
             response = start_run()
         case c.PAIRED:
-            bluetooth_send(create_byte(c.PAIRED, c.EMPTY_DATA))
-            response = response_parse(bluetooth_receive(param.ACK_SIZE))
+            response = paired()
         case "FLUSH": # Clientside only
             response = flush()
         case _:
