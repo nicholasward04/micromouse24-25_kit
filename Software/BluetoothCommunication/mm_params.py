@@ -15,11 +15,11 @@ DEF_PORT = 6                       # Default COMPORT, can change when pairing in
 PORT = DEF_PORT
 SOCKET = 0
 BAUD = 9600
-TIMEOUT = 0.5
+TIMEOUT = 0.2
 
 WAIT_TIME = 50
 
-DEBUG_SIZE = 275
+DEBUG_SIZE = 24
 ACK_SIZE = 2
 ACK = "ff"
 

@@ -23,11 +23,6 @@ class c():
 def create_byte(top_nibble, bott_nibble):
     return (top_nibble << 4) | bott_nibble
 
-def realign_packet(data):
-    if len(data) == param.DEBUG_SIZE:
-        return data[-1:] + data[:-1]
-    return data
-
 def flush_buffers():
     param.SOCKET.reset_input_buffer()
     param.SOCKET.reset_output_buffer()
@@ -82,14 +77,12 @@ def bluetooth_receive(bytes_expected):
 
 def set_mode():
     bluetooth_send(create_byte(c.SET_MODE, c.EMPTY_DATA))
-    flush_buffers()
     response = response_parse(bluetooth_receive(param.ACK_SIZE)) 
 
     return response
 
 def halt_run():
     bluetooth_send(create_byte(c.HALT_RUN, c.EMPTY_DATA))
-    flush_buffers()
     response = response_parse(bluetooth_receive(param.ACK_SIZE))
     if response == "OK":
         param.HALTED = True
@@ -98,7 +91,6 @@ def halt_run():
 
 def resume_run():
     bluetooth_send(create_byte(c.RESUME_RUN, c.EMPTY_DATA))
-    flush_buffers()
     response = response_parse(bluetooth_receive(param.ACK_SIZE))
     if response == "OK":
         param.HALTED = False
@@ -118,14 +110,12 @@ def read_batt():
 
 def pulse_buzz():
     bluetooth_send(create_byte(c.PULSE_BUZZ, c.EMPTY_DATA))
-    flush_buffers()
     response = response_parse(bluetooth_receive(param.ACK_SIZE))
 
     return response
 
 def start_run():
     bluetooth_send(create_byte(c.START_RUN, c.EMPTY_DATA))
-    flush_buffers()
     response = response_parse(bluetooth_receive(param.ACK_SIZE))
 
     return response
@@ -173,6 +163,15 @@ def command_line_parse(command):
 
     return response
 
+def realign_packet(data):
+    for i in range(6):
+        debug_index = data.find(b"Debug")
+        if debug_index != -1:
+            return data[debug_index:] + data[:debug_index]
+        else:
+            data = data[-1:] + data[:-1]
+    return data
+
 def receive_and_update():
     if param.MODE:
         data = bluetooth_receive(param.DEBUG_SIZE)
@@ -182,14 +181,17 @@ def receive_and_update():
         except Exception as e:
             return
         if specifier == "Debug":
-            # Extract localized maze
-            param.MAZE_SECTION = []
-            for i in range(5):
-                param.MAZE_SECTION.append(struct.unpack('B', bytes([data[5+i]]))[0])
-            # Extract other data
-            param.MOTOR_1_RPM = struct.unpack('>H', data[10:12])[0]
-            param.MOTOR_2_RPM = struct.unpack('>H', data[12:14])[0]
-            param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[14]]))[0]]
-            param.MOUSE_POSITION = struct.unpack('B', bytes([data[15]]))[0]
-            param.MOUSE_POSITION = [(param.MOUSE_POSITION >> 4) & 0x0F, param.MOUSE_POSITION & 0x0F]
-            param.BATTERY_VOLTAGE = struct.unpack('<d', data[16:])[0]
+            try:
+                # Extract localized maze
+                param.MAZE_SECTION = []
+                for i in range(5):
+                    param.MAZE_SECTION.append(struct.unpack('B', bytes([data[5+i]]))[0])
+                # Extract other data
+                param.MOTOR_1_RPM = struct.unpack('>H', data[10:12])[0]
+                param.MOTOR_2_RPM = struct.unpack('>H', data[12:14])[0]
+                param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[14]]))[0]]
+                param.MOUSE_POSITION = struct.unpack('B', bytes([data[15]]))[0]
+                param.MOUSE_POSITION = [(param.MOUSE_POSITION >> 4) & 0x0F, param.MOUSE_POSITION & 0x0F]
+                param.BATTERY_VOLTAGE = struct.unpack('<d', data[16:])[0]
+            except Exception as e:
+                return

@@ -7,7 +7,7 @@
 #include "main.h"
 #include "mm_commands.h"
 
-extern huart1;
+extern UART_HandleTypeDef huart1;
 
 extern uint8_t debugMode;
 extern uint8_t debugCounter;
@@ -77,7 +77,7 @@ void Create_Byte_Stream(uint8_t txData[24]) {
     txData[13] = (uint8_t)(motor_2_rpm & 0xFF);    // Low byte
     txData[14] = direction;
     txData[15] = position;
-    memcpy(&txData[16], &battery_volt, sizeof(battery_volt));
+    memcpy(txData + 16, &battery_volt, sizeof(battery_volt));
 }
 
 // When mouse in debug mode, transmit localized maze (5 bytes), motor 1 rpm (2 bytes), motor 2 rpm (2 bytes), direction (1 byte), position (1 byte), and battery voltage (8 bytes).
@@ -90,7 +90,7 @@ void Debug_Packet_Send() {
 void UART_Receive_Callback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART1) {
 		Parse_Receive_Data(rxData);
-		HAL_UART_Transmit_IT(&huart1, txData, sizeof(txData));      // Transmit response ACK (0xFF)                          // Parse incoming command
-		HAL_UART_Receive_IT(&huart1, rxData, sizeof(rxData));       // Receive incoming command
+		HAL_UART_Transmit_IT(&huart1, &txData, sizeof(txData));      // Transmit response ACK (0xFF)                          // Parse incoming command
+		HAL_UART_Receive_IT(&huart1, &rxData, sizeof(rxData));       // Receive incoming command
 	}
 }

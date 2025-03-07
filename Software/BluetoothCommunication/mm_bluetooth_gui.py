@@ -4,12 +4,20 @@
 import tkinter as tk
 import tkinter.font as tkFont
 from time import time
+import sys
 from mm_bluetooth_parse import command_line_parse, c, receive_and_update, bluetooth_connect, bluetooth_disconnect, flush_buffers
 from mm_maze_translation import translate_maze
 import mm_params as param
 
 root = tk.Tk()
 root.title("Micromouse Communication GUI")
+icon = (tk.PhotoImage(file="mm_logo_whitebg.png")).subsample(1, 1)
+root.wm_iconphoto(True, icon)
+
+if sys.platform == "win32":
+    import ctypes
+    app_id = "micromouse.gui"  # This can be any unique string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 
 root.columnconfigure(0, weight=2)
 root.columnconfigure(1, weight=1)
@@ -28,13 +36,13 @@ def maze_frame_update(maze_sect, pos, dir):
             maze_load.insert(0, row.strip("\n")) # Figure out spacing after testing that this works
 
 maze_frame = tk.Frame(root)
-maze_frame.grid(row=0, column=0, sticky="nsew")
+maze_frame.grid(row=0, column=0, sticky="nsew", padx=(50, 25), pady=15)
 
 maze_frame.columnconfigure(0, weight=1)
 maze_frame.rowconfigure(0, weight=1)
 
-maze_load = tk.Listbox(maze_frame)
-maze_load.grid(row=0, column=0, sticky="nsew", padx=(50, 25), pady=15)
+maze_load = tk.Listbox(maze_frame, font=("Courier", 15))
+maze_load.grid(row=0, column=0, sticky="nsew")
 
 # Terminal Frame
 
@@ -55,7 +63,6 @@ def commandLine_Handler(event=None):
     if text:
         command_history_write(text, "OUTGOING")
         command_history_write(command_line_parse(text), "INCOMING")
-        command_history_write(str(param.BATTERY_VOLTAGE), "INCOMING")
         command_line.delete(0, tk.END)
 
 def command_history_write(write_data, direction):
@@ -150,8 +157,9 @@ batt_voltage_value.grid(row=0, column=5, stick="nw", pady=(5, 0))
 # Quick Command Frame
 
 def stopButton_Handler():
-    command_history_write("SET_MODE", "OUTGOING")
+    command_history_write("HALT_RUN", "OUTGOING")
     command_history_write(command_line_parse(c.HALT_RUN), "INCOMING")
+    disableDebug()
 
 def saveCommandLog_Handler():
     write_data = command_history.get(0, tk.END)
@@ -164,9 +172,8 @@ def mouseMode_Handler():
     param.MODE = (param.MODE + 1) % 2
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.SET_MODE), "INCOMING")
-    toggleCommandLine(param.MODE) # TEST REMOVING THIS
+    toggleCommandLine(param.MODE)
     
-
 def enableAll(err):
     if err == "OK":
         param.PAIRED = True
@@ -189,6 +196,11 @@ def disableAll():
     command_line_send.configure(state="disable")
     command_line.configure(state="disable")
     bl_disc_button.configure(state="disable")
+
+def disableDebug():
+    flush_buffers()
+    command_history_write(command_line_parse("SET_MODE") + ": Disabled debug mode on mouse", "INCOMING")
+    mouse_mode_button.deselect()
 
 def toggleCommandLine(mode):
     if mode:
@@ -217,8 +229,7 @@ def bluetoothPairing_Handler():
 
 def bluetoothDisconnect_Handler():
     if (param.MODE == 1): # Ensure debug mode is disabled on mouse before disconnecting
-        flush_buffers()
-        command_history_write(command_line_parse("SET_MODE") + ": Disabled debug mode on mouse", "INCOMING")
+        disableDebug()
     command_history_write("DISCONNECT", "OUTGOING")
     bluetooth_disconnect()
 

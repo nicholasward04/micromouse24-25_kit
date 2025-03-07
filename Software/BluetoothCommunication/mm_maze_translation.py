@@ -41,9 +41,8 @@ def create_maze_file():
             maze.write(ROW_EVEN) if i % 2 == 0 else maze.write(ROW_ODD)
 
 def translate_maze(loc_maze, pos, dir):
-    if param.MAZE_NUM < 0:
+    if int(param.MAZE_NUM) < 0:
         update_maze_path()
         create_maze_file()
     # Maze data received as [CURR_BYTE, NORTH_BYTE, EAST_BYTE, SOUTH_BYTE, WEST_BYTE]
-    print("translate maze entered")
-    # Determine how received data is formatted, whether a stream of bytes or an array of streams of bytes
+    
