@@ -20,8 +20,21 @@ import mm_params as param
 #       |              |
 #       o----o----o----o
 
+HORIZONTAL_WALL = "----"
+VERTICAL_WALL   = "|"
+
+MOUSE_NORTH = "/\\"
+MOUSE_EAST  = "[)"
+MOUSE_SOUTH = "\/"
+MOUSE_WEST  = "(]"
+
+DIR = {"NORTH": MOUSE_NORTH, "EAST": MOUSE_EAST, "SOUTH": MOUSE_SOUTH, "WEST": MOUSE_WEST}
+MASKS = {"NORTH": 0b1000, "EAST": 0b0100, "SOUTH": 0b0010, "WEST": 0b0001}
+
 ROW_EVEN = "o    " * 15 + "o" + "\n"
 ROW_ODD  = " " * 76 + "\n"
+
+PREV_POS = [0, 0]
 
 def update_maze_path():
     files = os.listdir(param.MAZE_DIR)
@@ -40,9 +53,33 @@ def create_maze_file():
         for i in range(33):
             maze.write(ROW_EVEN) if i % 2 == 0 else maze.write(ROW_ODD)
 
-def translate_maze(loc_maze, pos, dir):
+def new_coords(x, y):
+    return 4*x+3, 2*y+1
+
+def translate_maze(maze_data, pos, dir):
     if int(param.MAZE_NUM) < 0:
         update_maze_path()
         create_maze_file()
-    # Maze data received as [CURR_BYTE, NORTH_BYTE, EAST_BYTE, SOUTH_BYTE, WEST_BYTE]
+
+    if pos != PREV_POS:
+        maze = []
+        with open(param.MAZE_FILE_PATH, 'r+') as maze_file:
+            maze = maze_file.readlines()
+            x,y = new_coords(pos[0], pos[1])
+            mouse = DIR[dir]
+
+            maze[y] = maze[y][:x] + mouse + maze[y][x+2:] # Put mouse representation in maze
+            if maze_data & MASKS["NORTH"]:
+                maze[y+1] = maze[y+1][:x-1] + HORIZONTAL_WALL + maze[y+1][x+3:]
+            if maze_data & MASKS["EAST"]:
+                maze[y] = maze[y][:x+3] + VERTICAL_WALL + maze[y][x+4:]
+            if maze_data & MASKS["SOUTH"]:
+                maze[y-1] = maze[y-1][:x-1] + HORIZONTAL_WALL + maze[y-1][x+3:]
+            if maze_data & MASKS["WEST"]:
+                maze[y] = maze[y][:x-2] + VERTICAL_WALL + maze[y][x-1:]
+
+        with open(param.MAZE_FILE_PATH, 'w') as maze_file:
+            for row in maze:
+                maze_file.write(row)
+
     

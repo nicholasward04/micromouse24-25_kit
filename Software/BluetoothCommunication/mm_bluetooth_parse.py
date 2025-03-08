@@ -77,7 +77,7 @@ def bluetooth_receive(bytes_expected):
 
 def set_mode():
     bluetooth_send(create_byte(c.SET_MODE, c.EMPTY_DATA))
-    response = response_parse(bluetooth_receive(param.ACK_SIZE)) 
+    response = response_parse(bluetooth_receive(param.ACK_SIZE))
 
     return response
 
@@ -176,22 +176,19 @@ def receive_and_update():
     if param.MODE:
         data = bluetooth_receive(param.DEBUG_SIZE)
         data = realign_packet(data)
+        flush()
         try:
             specifier = data[:5].decode('ascii')
         except Exception as e:
             return
         if specifier == "Debug":
             try:
-                # Extract localized maze
-                param.MAZE_SECTION = []
-                for i in range(5):
-                    param.MAZE_SECTION.append(struct.unpack('B', bytes([data[5+i]]))[0])
-                # Extract other data
-                param.MOTOR_1_RPM = struct.unpack('>H', data[10:12])[0]
-                param.MOTOR_2_RPM = struct.unpack('>H', data[12:14])[0]
-                param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[14]]))[0]]
-                param.MOUSE_POSITION = struct.unpack('B', bytes([data[15]]))[0]
+                param.CELL = (struct.unpack('B', bytes([data[5]]))[0])
+                param.MOTOR_1_RPM = struct.unpack('>H', data[6:8])[0]
+                param.MOTOR_2_RPM = struct.unpack('>H', data[8:10])[0]
+                param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[10]]))[0]]
+                param.MOUSE_POSITION = struct.unpack('B', bytes([data[11]]))[0]
                 param.MOUSE_POSITION = [(param.MOUSE_POSITION >> 4) & 0x0F, param.MOUSE_POSITION & 0x0F]
-                param.BATTERY_VOLTAGE = struct.unpack('<d', data[16:])[0]
+                param.BATTERY_VOLTAGE = struct.unpack('<d', data[12:])[0]
             except Exception as e:
                 return

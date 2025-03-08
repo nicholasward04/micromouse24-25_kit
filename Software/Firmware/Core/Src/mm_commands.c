@@ -15,7 +15,7 @@ extern uint8_t debugCounter;
 uint8_t txData = 0xFF;
 uint8_t rxData = 0;
 
-uint8_t txDebug[24];
+uint8_t txDebug[PACKET_SIZE];
 uint8_t HALTED = 0;
 
 // 8-bit wide commands [4-bit][4-bit] --> [Command Code][Other Data]
@@ -59,29 +59,29 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 	}
 }
 
-uint8_t maze[5] = {0b1101, 0b1011, 0b1100, 0b0101, 0b1101};
+uint8_t cell = 0b1101;
 uint16_t motor_1_rpm = 2048;
 uint16_t motor_2_rpm = 2048;
 uint8_t direction = 1;         // East
 uint8_t position = 0b00010010; // First 4 bits is x position, last 4 bits is y position (1, 2)
 double battery_volt = 8.43;
 
-void Create_Byte_Stream(uint8_t txData[24]) {
-	bzero(txData, 24);
+void Create_Byte_Stream(uint8_t txData[PACKET_SIZE]) {
+	bzero(txData, PACKET_SIZE);
 
 	memcpy(txData, "Debug", 5);
-	memcpy(txData + 5, maze, 5);                   // Current maze cell and 4 adjacent cells
-	txData[10] = (uint8_t)(motor_1_rpm >> 8);      // High byte
-	txData[11] = (uint8_t)(motor_1_rpm & 0xFF);    // Low byte
-    txData[12] = (uint8_t)(motor_2_rpm >> 8);      // High byte
-    txData[13] = (uint8_t)(motor_2_rpm & 0xFF);    // Low byte
-    txData[14] = direction;
-    txData[15] = position;
-    memcpy(txData + 16, &battery_volt, sizeof(battery_volt));
+	txData[5]  = cell;
+	txData[6]  = (uint8_t)(motor_1_rpm >> 8);      // High byte
+	txData[7]  = (uint8_t)(motor_1_rpm & 0xFF);    // Low byte
+    txData[8]  = (uint8_t)(motor_2_rpm >> 8);      // High byte
+    txData[9]  = (uint8_t)(motor_2_rpm & 0xFF);    // Low byte
+    txData[10] = direction;
+    txData[11] = position;
+    memcpy(txData + 12, &battery_volt, sizeof(battery_volt));
 }
 
-// When mouse in debug mode, transmit localized maze (5 bytes), motor 1 rpm (2 bytes), motor 2 rpm (2 bytes), direction (1 byte), position (1 byte), and battery voltage (8 bytes).
-// Also transmit start identifier "Debug". This totals to 24 bytes of data transmitted every 100 ms.
+// When mouse in debug mode, transmit current cell (1 byte), motor 1 rpm (2 bytes), motor 2 rpm (2 bytes), direction (1 byte), position (1 byte), and battery voltage (8 bytes).
+// Also transmit start identifier "Debug". This totals to 20 bytes of data transmitted every 100 ms.
 void Debug_Packet_Send() {
 	Create_Byte_Stream(txDebug);                                  // Create byte stream
 	HAL_UART_Transmit_IT(&huart1, txDebug, sizeof(txDebug));      // Transmit data

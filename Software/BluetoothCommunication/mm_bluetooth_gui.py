@@ -41,7 +41,7 @@ maze_frame.grid(row=0, column=0, sticky="nsew", padx=(50, 25), pady=15)
 maze_frame.columnconfigure(0, weight=1)
 maze_frame.rowconfigure(0, weight=1)
 
-maze_load = tk.Listbox(maze_frame, font=("Courier", 15))
+maze_load = tk.Listbox(maze_frame, font=("Courier", 15), fg="black")
 maze_load.grid(row=0, column=0, sticky="nsew")
 
 # Terminal Frame
@@ -160,6 +160,8 @@ def stopButton_Handler():
     command_history_write("HALT_RUN", "OUTGOING")
     command_history_write(command_line_parse(c.HALT_RUN), "INCOMING")
     disableDebug()
+    stop_operation_button.config(state=tk.DISABLED)
+    stop_operation_button.after(50, lambda: stop_operation_button.config(state=tk.NORMAL))
 
 def saveCommandLog_Handler():
     write_data = command_history.get(0, tk.END)
@@ -173,6 +175,8 @@ def mouseMode_Handler():
     command_history_write("SET_MODE", "OUTGOING")
     command_history_write(command_line_parse(c.SET_MODE), "INCOMING")
     toggleCommandLine(param.MODE)
+    mouse_mode_button.config(state=tk.DISABLED)
+    mouse_mode_button.after(50, lambda: mouse_mode_button.config(state=tk.NORMAL))
     
 def enableAll(err):
     if err == "OK":
@@ -285,7 +289,7 @@ bl_pair_entry.bind("<FocusOut>", focusOut)
 
 def update_display():
     if param.MODE:
-        maze_frame_update(param.MAZE_SECTION, param.MOUSE_POSITION, param.MOUSE_DIRECTION)                                              # Update maze
+        maze_frame_update(param.CELL, param.MOUSE_POSITION, param.MOUSE_DIRECTION)                                                      # Update maze
         data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)     # Update parameter values
 
     root.after(param.WAIT_TIME, receive_and_update)
