@@ -1,2 +1,7 @@
-../Core/Src/mm_supplemental.c:9:6:LED_Power_Init	1
-../Core/Src/mm_supplemental.c:13:6:Reset_Buffers	1
+../Core/Src/mm_supplemental.c:12:6:LED_Power_Init	1
+../Core/Src/mm_supplemental.c:16:6:Reset_Buffers	1
+../Core/Src/mm_supplemental.c:21:6:Pulse_Buzzer	1
+../Core/Src/mm_supplemental.c:26:6:LED_Red_Toggle	1
+../Core/Src/mm_supplemental.c:30:6:LED_Green_Toggle	1
+../Core/Src/mm_supplemental.c:34:6:LED_Blue_Toggle	1
+../Core/Src/mm_supplemental.c:38:8:Read_Battery	1

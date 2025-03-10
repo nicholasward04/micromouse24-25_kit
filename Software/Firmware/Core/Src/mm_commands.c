@@ -1,16 +1,22 @@
-/*	mm_commands.h
+/*	mm_commands.c
  *
  *	File for implementation of reception and transmission of data and command packets
  *	through UART (and over Bluetooth)
  */
  
-#include "main.h"
 #include "mm_commands.h"
+#include "mm_supplemental.h"
 
 extern UART_HandleTypeDef huart1;
 
 extern uint8_t debugMode;
 extern uint8_t debugCounter;
+
+extern double battery_voltage;
+extern uint16_t raw_FL;
+extern uint16_t raw_L;
+extern uint16_t raw_R;
+extern uint16_t raw_FR;
 
 uint8_t txData = 0xFF;
 uint8_t rxData = 0;
@@ -29,7 +35,8 @@ uint8_t HALTED = 0;
 
 void Parse_Receive_Data(uint8_t rxBuff) {
 	uint8_t command = (rxBuff & 0xF0) >> 4;   // Isolate command code
-	uint8_t data    = (rxBuff & 0x0F);        // Isolate other data
+	uint8_t data    = (rxBuff & 0x0F);        // Isolate other data (not used currently)
+	(void) data;                              // Temporary to remove warning for unused variable
 
 	switch(command) {
 		case SET_MODE:
@@ -44,10 +51,10 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 			HALTED = 0;
 			break;
 		case READ_BATT:
-			// SEND BATTERY DATA HERE
+			HAL_UART_Transmit_IT(&huart1, (uint8_t*)&battery_voltage, sizeof(double));
 			break;
 		case PULSE_BUZZ:
-			// CALL FUNCTION TO PLAY BUZZER HERE
+			Pulse_Buzzer(100);
 			break;
 		case START_RUN:
 			// SET RUN START VAR TO TRUE
@@ -64,24 +71,25 @@ uint16_t motor_1_rpm = 2048;
 uint16_t motor_2_rpm = 2048;
 uint8_t direction = 1;         // East
 uint8_t position = 0b00010010; // First 4 bits is x position, last 4 bits is y position (1, 2)
-double battery_volt = 8.43;
 
 void Create_Byte_Stream(uint8_t txData[PACKET_SIZE]) {
 	bzero(txData, PACKET_SIZE);
 
 	memcpy(txData, "Debug", 5);
-	txData[5]  = cell;
-	txData[6]  = (uint8_t)(motor_1_rpm >> 8);      // High byte
-	txData[7]  = (uint8_t)(motor_1_rpm & 0xFF);    // Low byte
-    txData[8]  = (uint8_t)(motor_2_rpm >> 8);      // High byte
-    txData[9]  = (uint8_t)(motor_2_rpm & 0xFF);    // Low byte
-    txData[10] = direction;
-    txData[11] = position;
-    memcpy(txData + 12, &battery_volt, sizeof(battery_volt));
+	memcpy(txData + 5, &cell, sizeof(uint8_t));
+	memcpy(txData + 6, &motor_1_rpm, sizeof(uint16_t));
+	memcpy(txData + 8, &motor_2_rpm, sizeof(uint16_t));
+	memcpy(txData + 10, &direction, sizeof(uint8_t));
+	memcpy(txData + 11, &position, sizeof(uint8_t));
+	memcpy(txData + 12, &battery_voltage, sizeof(double));
+	memcpy(txData + 20, &raw_FL, sizeof(uint16_t));
+	memcpy(txData + 22, &raw_L, sizeof(uint16_t));
+	memcpy(txData + 24, &raw_R, sizeof(uint16_t));
+	memcpy(txData + 26, &raw_FR, sizeof(uint16_t));
 }
 
-// When mouse in debug mode, transmit current cell (1 byte), motor 1 rpm (2 bytes), motor 2 rpm (2 bytes), direction (1 byte), position (1 byte), and battery voltage (8 bytes).
-// Also transmit start identifier "Debug". This totals to 20 bytes of data transmitted every 100 ms.
+// When mouse in debug mode transmit above data.
+//  Also transmit start identifier "Debug". This totals to 28 bytes of data transmitted every 50 ms.
 void Debug_Packet_Send() {
 	Create_Byte_Stream(txDebug);                                  // Create byte stream
 	HAL_UART_Transmit_IT(&huart1, txDebug, sizeof(txDebug));      // Transmit data

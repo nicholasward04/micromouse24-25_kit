@@ -189,6 +189,10 @@ def receive_and_update():
                 param.MOUSE_DIRECTION = param.DIRECTIONS[struct.unpack('B', bytes([data[10]]))[0]]
                 param.MOUSE_POSITION = struct.unpack('B', bytes([data[11]]))[0]
                 param.MOUSE_POSITION = [(param.MOUSE_POSITION >> 4) & 0x0F, param.MOUSE_POSITION & 0x0F]
-                param.BATTERY_VOLTAGE = struct.unpack('<d', data[12:])[0]
+                param.BATTERY_VOLTAGE = struct.unpack('<d', data[12:20])[0]
+                param.RAW_FL = struct.unpack('>H', data[20:22])[0]
+                param.RAW_L = struct.unpack('>H', data[22:24])[0]
+                param.RAW_R = struct.unpack('>H', data[24:26])[0]
+                param.RAW_FR = struct.unpack('>H', data[26:])[0]
             except Exception as e:
                 return

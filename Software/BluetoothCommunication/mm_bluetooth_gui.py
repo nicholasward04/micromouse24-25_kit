@@ -109,24 +109,34 @@ command_history_scrollbar.grid(row=1, column=2, sticky="ns")
 
 # Data Frame
 
-def data_frame_update(motor_1, motor_2, batt, pos, dir):
+def data_frame_update(motor_1, motor_2, batt, pos, dir, fl, l, r, fr):
     motor_1_rpm_value.delete(0, tk.END)
     motor_2_rpm_value.delete(0, tk.END)
     batt_voltage_value.delete(0, tk.END)
     mouse_position_value.delete(0, tk.END)
     mouse_direction_value.delete(0, tk.END)
+    ir_fl_value.delete(0, tk.END)
+    ir_l_value.delete(0, tk.END)
+    ir_r_value.delete(0, tk.END)
+    ir_fr_value.delete(0, tk.END)
 
     motor_1_rpm_value.insert(0, f"{motor_1}")
     motor_2_rpm_value.insert(0, f"{motor_2}")
     batt_voltage_value.insert(0, f"{batt}")
     mouse_position_value.insert(0, f"{pos[0]}, {pos[1]}")
     mouse_direction_value.insert(0, f"{dir}")
+    ir_fl_value.insert(0, f"{fl}")
+    ir_l_value.insert(0, f"{l}")
+    ir_r_value.insert(0, f"{r}")
+    ir_fr_value.insert(0, f"{fr}")
+    
 
 data_frame = tk.Frame(root, relief=tk.SUNKEN, bd=1)
 data_frame.grid(row=1, column=0, sticky="nsew", padx=(50, 25), pady=(0, 15))
 
 data_frame.columnconfigure((0,1,2,3,4,5), weight=0)
 data_frame.rowconfigure((0,1), weight=0)
+data_frame.rowconfigure(2, weight=1)  # If add more data, may need to change to weight=0 and just shift the row down
 
 motor_1_rpm = tk.Label(data_frame, text="Motor 1 RPM:")
 motor_1_rpm.grid(row=0, column=0, sticky="nw", padx=(10, 5), pady=(5, 0))
@@ -137,7 +147,6 @@ motor_2_rpm = tk.Label(data_frame, text="Motor 2 RPM:")
 motor_2_rpm.grid(row=1, column=0, sticky="nw", padx=(10, 5), pady=(5, 0))
 motor_2_rpm_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
 motor_2_rpm_value.grid(row=1, column=1, stick="nw", pady=(5, 0))
-
 
 mouse_direction = tk.Label(data_frame, text="Direction:")
 mouse_direction.grid(row=0, column=2, sticky="nw", padx=(10, 5), pady=(5, 0))
@@ -153,6 +162,26 @@ batt_voltage = tk.Label(data_frame, text="Battery (V):")
 batt_voltage.grid(row=0, column=4, sticky="nw", padx=(10, 5), pady=(5, 0))
 batt_voltage_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
 batt_voltage_value.grid(row=0, column=5, stick="nw", pady=(5, 0))
+
+ir_fl = tk.Label(data_frame, text="IR Front Left:")
+ir_fl.grid(row=2, column=0, sticky="sw", padx=(10, 5), pady=(5, 5))
+ir_fl_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+ir_fl_value.grid(row=2, column=1, stick="sw", pady=(5, 5))
+
+ir_l = tk.Label(data_frame, text="IR Left:")
+ir_l.grid(row=2, column=2, sticky="sw", padx=(10, 5), pady=(5, 5))
+ir_l_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+ir_l_value.grid(row=2, column=3, stick="sw", pady=(5, 5))
+
+ir_r = tk.Label(data_frame, text="IR Right:")
+ir_r.grid(row=2, column=4, sticky="sw", padx=(10, 5), pady=(5, 5))
+ir_r_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+ir_r_value.grid(row=2, column=5, stick="sw", pady=(5, 5))
+
+ir_fr = tk.Label(data_frame, text="IR Front Right:")
+ir_fr.grid(row=2, column=6, sticky="sw", padx=(10, 5), pady=(5, 5))
+ir_fr_value = tk.Listbox(data_frame, height=1, relief=tk.SUNKEN, bd=2)
+ir_fr_value.grid(row=2, column=7, stick="sw", pady=(5, 5))
 
 # Quick Command Frame
 
@@ -290,7 +319,8 @@ bl_pair_entry.bind("<FocusOut>", focusOut)
 def update_display():
     if param.MODE:
         maze_frame_update(param.CELL, param.MOUSE_POSITION, param.MOUSE_DIRECTION)                                                      # Update maze
-        data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION)     # Update parameter values
+        data_frame_update(param.MOTOR_1_RPM, param.MOTOR_2_RPM, param.BATTERY_VOLTAGE, param.MOUSE_POSITION, param.MOUSE_DIRECTION,     # Update parameter values
+                          param.RAW_FL, param.RAW_L, param.RAW_R, param.RAW_FR)
 
     root.after(param.WAIT_TIME, receive_and_update)
     root.after(param.WAIT_TIME, update_display)

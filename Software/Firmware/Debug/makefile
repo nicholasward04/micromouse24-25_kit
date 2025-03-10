@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := CoolNameForMouseHere
+BUILD_ARTIFACT_NAME := TheHammer
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-CoolNameForMouseHere.elf \
+TheHammer.elf \
 
 MAP_FILES += \
-CoolNameForMouseHere.map \
+TheHammer.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-CoolNameForMouseHere.list \
+TheHammer.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: CoolNameForMouseHere.elf secondary-outputs
+main-build: TheHammer.elf secondary-outputs
 
 # Tool invocations
-CoolNameForMouseHere.elf CoolNameForMouseHere.map: $(OBJS) $(USER_OBJS) C:\Users\darth\OneDrive\Desktop\Micromouse_24-25\24-25\Software\Firmware\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "CoolNameForMouseHere.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\darth\OneDrive\Desktop\Micromouse_24-25\24-25\Software\Firmware\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="CoolNameForMouseHere.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+TheHammer.elf TheHammer.map: $(OBJS) $(USER_OBJS) C:\Users\darth\OneDrive\Desktop\Micromouse_24-25\24-25\Software\Firmware\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "TheHammer.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\darth\OneDrive\Desktop\Micromouse_24-25\24-25\Software\Firmware\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="TheHammer.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-CoolNameForMouseHere.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "CoolNameForMouseHere.list"
+TheHammer.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "TheHammer.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) CoolNameForMouseHere.elf CoolNameForMouseHere.list CoolNameForMouseHere.map default.size.stdout
+	-$(RM) TheHammer.elf TheHammer.list TheHammer.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
