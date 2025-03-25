@@ -127,7 +127,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
 	  Poll_Sensors();
-	  Read_Battery();
+	  battery_voltage = Read_Battery();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

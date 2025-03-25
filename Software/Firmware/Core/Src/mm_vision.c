@@ -85,7 +85,6 @@ uint16_t Measure_Dist(dist_t dist) { // Poll raw IR sensors
 		break;
 	}
 	HAL_GPIO_WritePin(emitter_port, emitter_pin, GPIO_PIN_SET);
-	HAL_Delay(1);
 
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);

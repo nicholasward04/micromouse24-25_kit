@@ -3,4 +3,4 @@
 ../Core/Src/mm_vision.c:37:13:ADC1_Select_CH5	24	static
 ../Core/Src/mm_vision.c:48:13:ADC1_Select_CH4	24	static
 ../Core/Src/mm_vision.c:59:10:Measure_Dist	24	static
-../Core/Src/mm_vision.c:100:6:Poll_Sensors	8	static
+../Core/Src/mm_vision.c:99:6:Poll_Sensors	8	static

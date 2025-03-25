@@ -14,14 +14,14 @@ RAW_L = 0
 RAW_R = 0
 RAW_FR = 0
 
-MAC_ADDRESS = "98:D3:21:F7:A1:F4"  # Use your bluetooth modules mac address here
+MAC_ADDRESS = "00:25:00:00:19:52"  # Use your bluetooth modules mac address here
 DEF_PORT = 6                       # Default COMPORT, can change when pairing in GUI or change default here
 PORT = DEF_PORT
 SOCKET = 0
 BAUD = 9600
 TIMEOUT = 0.2
 
-WAIT_TIME = 25
+WAIT_TIME = 50
 
 DEBUG_SIZE = 28
 ACK_SIZE = 2

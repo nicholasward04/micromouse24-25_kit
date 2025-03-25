@@ -3,4 +3,4 @@
 ../Core/Src/mm_vision.c:37:13:ADC1_Select_CH5	2
 ../Core/Src/mm_vision.c:48:13:ADC1_Select_CH4	2
 ../Core/Src/mm_vision.c:59:10:Measure_Dist	5
-../Core/Src/mm_vision.c:100:6:Poll_Sensors	1
+../Core/Src/mm_vision.c:99:6:Poll_Sensors	1
