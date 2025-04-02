@@ -7,6 +7,7 @@
 #define INC_MM_VISION_H_
 
 #include "main.h"
+#include "mm_systick.h"
 
 typedef enum { // Enumeration for IR cases
 	DIST_FL,
@@ -16,6 +17,6 @@ typedef enum { // Enumeration for IR cases
 } dist_t;
 
 uint16_t Measure_Distance(dist_t dist);
-void Poll_Sensors();
+void Poll_Sensors(mouse_state_t* mouse_state);
 
 #endif /* INC_MM_VISION_H_ */

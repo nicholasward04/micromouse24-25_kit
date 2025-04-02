@@ -96,9 +96,9 @@ uint16_t Measure_Dist(dist_t dist) { // Poll raw IR sensors
 	return adc_val;
 }
 
-void Poll_Sensors(){ // Gather all raw IR values
-	raw_FL = Measure_Dist(DIST_FL);
-	raw_L = Measure_Dist(DIST_L);
-	raw_R = Measure_Dist(DIST_R);
-	raw_FR = Measure_Dist(DIST_FR);
+void Poll_Sensors(mouse_state_t* mouse_state){ // Gather all raw IR values
+	mouse_state->raw_FL = Measure_Dist(DIST_FL);
+	mouse_state->raw_L = Measure_Dist(DIST_L);
+	mouse_state->raw_R = Measure_Dist(DIST_R);
+	mouse_state->raw_FR = Measure_Dist(DIST_FR);
 }

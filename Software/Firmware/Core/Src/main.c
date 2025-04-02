@@ -24,6 +24,8 @@
 #include "mm_supplemental.h"
 #include "mm_commands.h"
 #include "mm_vision.h"
+#include "mm_systick.h"
+#include "mm_motors.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,15 +71,10 @@ static void MX_ADC2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+mouse_state_t mouse_state;
+
 uint8_t debugMode = 0;
 uint8_t debugCounter;
-
-double battery_voltage = 0;
-
-uint16_t raw_FL;
-uint16_t raw_L;
-uint16_t raw_R;
-uint16_t raw_FR;
 /* USER CODE END 0 */
 
 /**
@@ -118,7 +115,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint8_t startBuff;
   HAL_UART_Receive_IT(&huart1, &startBuff, 1);
-
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -126,8 +124,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  Poll_Sensors();
-	  battery_voltage = Read_Battery();
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -296,7 +293,7 @@ static void MX_TIM2_Init(void)
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 2047;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -486,11 +483,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_Power_GPIO_Port, LED_Power_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|ML_BWD_Pin
-                          |MR_BWD_Pin|ML_FWD_Pin|EMIT_FR_Pin|Buzzer_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|Buzzer_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(MR_FWD_GPIO_Port, MR_FWD_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(ML_BWD_GPIO_Port, ML_BWD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_Red_Pin|LED_Blue_Pin|LED_Green_Pin, GPIO_PIN_SET);
@@ -508,17 +505,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(SPEED_SW2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EMIT_R_Pin EMIT_L_Pin EMIT_FL_Pin ML_BWD_Pin
-                           MR_BWD_Pin ML_FWD_Pin EMIT_FR_Pin Buzzer_Pin */
-  GPIO_InitStruct.Pin = EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|ML_BWD_Pin
-                          |MR_BWD_Pin|ML_FWD_Pin|EMIT_FR_Pin|Buzzer_Pin;
+  /*Configure GPIO pins : EMIT_R_Pin EMIT_L_Pin EMIT_FL_Pin MR_FWD_Pin
+                           ML_FWD_Pin MR_BWD_Pin EMIT_FR_Pin Buzzer_Pin */
+  GPIO_InitStruct.Pin = EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|Buzzer_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : MR_FWD_Pin LED_Red_Pin LED_Blue_Pin LED_Green_Pin */
-  GPIO_InitStruct.Pin = MR_FWD_Pin|LED_Red_Pin|LED_Blue_Pin|LED_Green_Pin;
+  /*Configure GPIO pins : ML_BWD_Pin LED_Red_Pin LED_Blue_Pin LED_Green_Pin */
+  GPIO_InitStruct.Pin = ML_BWD_Pin|LED_Red_Pin|LED_Blue_Pin|LED_Green_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

@@ -6,17 +6,14 @@
  
 #include "mm_commands.h"
 #include "mm_supplemental.h"
+#include "mm_systick.h"
 
 extern UART_HandleTypeDef huart1;
 
 extern uint8_t debugMode;
 extern uint8_t debugCounter;
 
-extern double battery_voltage;
-extern uint16_t raw_FL;
-extern uint16_t raw_L;
-extern uint16_t raw_R;
-extern uint16_t raw_FR;
+extern mouse_state_t mouse_state;
 
 uint8_t txData = 0xFF;
 uint8_t rxData = 0;
@@ -51,7 +48,7 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 			HALTED = 0;
 			break;
 		case READ_BATT:
-			HAL_UART_Transmit_IT(&huart1, (uint8_t*)&battery_voltage, sizeof(double));
+			HAL_UART_Transmit_IT(&huart1, (uint8_t*)&(mouse_state.battery_voltage), sizeof(double));
 			break;
 		case PULSE_BUZZ:
 			Pulse_Buzzer(100);
@@ -66,26 +63,20 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 	}
 }
 
-uint8_t cell = 0b1101;
-uint16_t motor_1_rpm = 2048;
-uint16_t motor_2_rpm = 2048;
-uint8_t direction = 1;         // East
-uint8_t position = 0b00010010; // First 4 bits is x position, last 4 bits is y position (1, 2)
-
 void Create_Byte_Stream(uint8_t txData[PACKET_SIZE]) {
 	bzero(txData, PACKET_SIZE);
 
 	memcpy(txData, "Debug", 5);
-	memcpy(txData + 5, &cell, sizeof(uint8_t));
-	memcpy(txData + 6, &motor_1_rpm, sizeof(uint16_t));
-	memcpy(txData + 8, &motor_2_rpm, sizeof(uint16_t));
-	memcpy(txData + 10, &direction, sizeof(uint8_t));
-	memcpy(txData + 11, &position, sizeof(uint8_t));
-	memcpy(txData + 12, &battery_voltage, sizeof(double));
-	memcpy(txData + 20, &raw_FL, sizeof(uint16_t));
-	memcpy(txData + 22, &raw_L, sizeof(uint16_t));
-	memcpy(txData + 24, &raw_R, sizeof(uint16_t));
-	memcpy(txData + 26, &raw_FR, sizeof(uint16_t));
+	memcpy(txData + 5, &mouse_state.current_cell, sizeof(uint8_t));
+	memcpy(txData + 6, &mouse_state.motor_L_RPM, sizeof(uint16_t));
+	memcpy(txData + 8, &mouse_state.motor_R_RPM, sizeof(uint16_t));
+	memcpy(txData + 10, &mouse_state.mouse_direction, sizeof(uint8_t));
+	memset(txData + 11, ((mouse_state.mouse_position[0] << 4) | mouse_state.mouse_position[1]), sizeof(uint8_t));
+	memcpy(txData + 12, &mouse_state.battery_voltage, sizeof(double));
+	memcpy(txData + 20, &mouse_state.raw_FL, sizeof(uint16_t));
+	memcpy(txData + 22, &mouse_state.raw_L, sizeof(uint16_t));
+	memcpy(txData + 24, &mouse_state.raw_R, sizeof(uint16_t));
+	memcpy(txData + 26, &mouse_state.raw_FR, sizeof(uint16_t));
 }
 
 // When mouse in debug mode transmit above data.

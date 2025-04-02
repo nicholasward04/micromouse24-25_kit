@@ -1,2 +1,0 @@
-../Core/Src/systick.c:14:6:Debug_Mode	8	static
-../Core/Src/systick.c:23:6:Buzzer_Check	8	static
