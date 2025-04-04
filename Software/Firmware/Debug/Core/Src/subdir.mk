@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Core/Src/main.c \
 ../Core/Src/mm_commands.c \
+../Core/Src/mm_encoders.c \
 ../Core/Src/mm_motors.c \
 ../Core/Src/mm_supplemental.c \
 ../Core/Src/mm_systick.c \
@@ -20,6 +21,7 @@ C_SRCS += \
 OBJS += \
 ./Core/Src/main.o \
 ./Core/Src/mm_commands.o \
+./Core/Src/mm_encoders.o \
 ./Core/Src/mm_motors.o \
 ./Core/Src/mm_supplemental.o \
 ./Core/Src/mm_systick.o \
@@ -33,6 +35,7 @@ OBJS += \
 C_DEPS += \
 ./Core/Src/main.d \
 ./Core/Src/mm_commands.d \
+./Core/Src/mm_encoders.d \
 ./Core/Src/mm_motors.d \
 ./Core/Src/mm_supplemental.d \
 ./Core/Src/mm_systick.d \
@@ -51,7 +54,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/mm_commands.cyclo ./Core/Src/mm_commands.d ./Core/Src/mm_commands.o ./Core/Src/mm_commands.su ./Core/Src/mm_motors.cyclo ./Core/Src/mm_motors.d ./Core/Src/mm_motors.o ./Core/Src/mm_motors.su ./Core/Src/mm_supplemental.cyclo ./Core/Src/mm_supplemental.d ./Core/Src/mm_supplemental.o ./Core/Src/mm_supplemental.su ./Core/Src/mm_systick.cyclo ./Core/Src/mm_systick.d ./Core/Src/mm_systick.o ./Core/Src/mm_systick.su ./Core/Src/mm_vision.cyclo ./Core/Src/mm_vision.d ./Core/Src/mm_vision.o ./Core/Src/mm_vision.su ./Core/Src/stm32f1xx_hal_msp.cyclo ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_hal_msp.su ./Core/Src/stm32f1xx_it.cyclo ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/stm32f1xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f1xx.cyclo ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/system_stm32f1xx.su
+	-$(RM) ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/mm_commands.cyclo ./Core/Src/mm_commands.d ./Core/Src/mm_commands.o ./Core/Src/mm_commands.su ./Core/Src/mm_encoders.cyclo ./Core/Src/mm_encoders.d ./Core/Src/mm_encoders.o ./Core/Src/mm_encoders.su ./Core/Src/mm_motors.cyclo ./Core/Src/mm_motors.d ./Core/Src/mm_motors.o ./Core/Src/mm_motors.su ./Core/Src/mm_supplemental.cyclo ./Core/Src/mm_supplemental.d ./Core/Src/mm_supplemental.o ./Core/Src/mm_supplemental.su ./Core/Src/mm_systick.cyclo ./Core/Src/mm_systick.d ./Core/Src/mm_systick.o ./Core/Src/mm_systick.su ./Core/Src/mm_vision.cyclo ./Core/Src/mm_vision.d ./Core/Src/mm_vision.o ./Core/Src/mm_vision.su ./Core/Src/stm32f1xx_hal_msp.cyclo ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_hal_msp.su ./Core/Src/stm32f1xx_it.cyclo ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/stm32f1xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f1xx.cyclo ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/system_stm32f1xx.su
 
 .PHONY: clean-Core-2f-Src
 

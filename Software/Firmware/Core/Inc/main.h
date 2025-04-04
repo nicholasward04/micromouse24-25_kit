@@ -34,6 +34,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -113,8 +114,8 @@ void Error_Handler(void);
 #define MR_ENC_B_GPIO_Port GPIOB
 #define MR_ENC_A_Pin GPIO_PIN_7
 #define MR_ENC_A_GPIO_Port GPIOB
-#define Buzzer_Pin GPIO_PIN_8
-#define Buzzer_GPIO_Port GPIOB
+#define BUZZER_Pin GPIO_PIN_8
+#define BUZZER_GPIO_Port GPIOB
 #define LOADMAZE_SW3_Pin GPIO_PIN_9
 #define LOADMAZE_SW3_GPIO_Port GPIOB
 

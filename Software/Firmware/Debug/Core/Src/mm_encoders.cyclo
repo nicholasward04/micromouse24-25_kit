@@ -1,0 +1,2 @@
+../Core/Src/mm_encoders.c:27:6:HAL_TIM_IC_CaptureCallback	3
+../Core/Src/mm_encoders.c:41:10:Calculate_RPM	1

@@ -19,7 +19,7 @@ void Reset_Buffers(uint8_t rxBuff, uint8_t txBuff) {
 }
 
 void Pulse_Buzzer(uint16_t delay) {
-	HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_SET);
 	buzzerDelay = delay;
 }
 

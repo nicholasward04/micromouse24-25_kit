@@ -26,6 +26,7 @@
 #include "mm_vision.h"
 #include "mm_systick.h"
 #include "mm_motors.h"
+#include "mm_encoders.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,8 +74,19 @@ static void MX_ADC2_Init(void);
 /* USER CODE BEGIN 0 */
 mouse_state_t mouse_state;
 
+// Debug Mode
 uint8_t debugMode = 0;
-uint8_t debugCounter;
+uint8_t debugCounter = 0;
+
+// Global
+uint32_t global_time = 0;
+
+// Encoders
+int32_t objective_L = 0;
+int32_t objective_R = 0;
+int32_t prev_obj_L = 0;
+int32_t prev_obj_R = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -85,7 +97,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -115,8 +126,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint8_t startBuff;
   HAL_UART_Receive_IT(&huart1, &startBuff, 1);
+
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
+  HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -126,6 +141,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
   }
   /* USER CODE END 3 */
 }
@@ -160,7 +176,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
@@ -484,7 +500,7 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
-                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|Buzzer_Pin, GPIO_PIN_RESET);
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|BUZZER_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ML_BWD_GPIO_Port, ML_BWD_Pin, GPIO_PIN_RESET);
@@ -506,9 +522,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(SPEED_SW2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EMIT_R_Pin EMIT_L_Pin EMIT_FL_Pin MR_FWD_Pin
-                           ML_FWD_Pin MR_BWD_Pin EMIT_FR_Pin Buzzer_Pin */
+                           ML_FWD_Pin MR_BWD_Pin EMIT_FR_Pin BUZZER_Pin */
   GPIO_InitStruct.Pin = EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
-                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|Buzzer_Pin;
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|BUZZER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
