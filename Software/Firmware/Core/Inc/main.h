@@ -77,10 +77,10 @@ void Error_Handler(void);
 #define RECIV_FR_GPIO_Port GPIOA
 #define RECIV_R_Pin GPIO_PIN_5
 #define RECIV_R_GPIO_Port GPIOA
-#define ML_ENC_A_Pin GPIO_PIN_6
-#define ML_ENC_A_GPIO_Port GPIOA
-#define ML_ENC_B_Pin GPIO_PIN_7
+#define ML_ENC_B_Pin GPIO_PIN_6
 #define ML_ENC_B_GPIO_Port GPIOA
+#define ML_ENC_A_Pin GPIO_PIN_7
+#define ML_ENC_A_GPIO_Port GPIOA
 #define RECIV_L_Pin GPIO_PIN_0
 #define RECIV_L_GPIO_Port GPIOB
 #define RECIV_FL_Pin GPIO_PIN_1
@@ -110,10 +110,10 @@ void Error_Handler(void);
 #define ARM_SW1_EXTI_IRQn EXTI4_IRQn
 #define EMIT_FR_Pin GPIO_PIN_5
 #define EMIT_FR_GPIO_Port GPIOB
-#define MR_ENC_B_Pin GPIO_PIN_6
-#define MR_ENC_B_GPIO_Port GPIOB
-#define MR_ENC_A_Pin GPIO_PIN_7
+#define MR_ENC_A_Pin GPIO_PIN_6
 #define MR_ENC_A_GPIO_Port GPIOB
+#define MR_ENC_B_Pin GPIO_PIN_7
+#define MR_ENC_B_GPIO_Port GPIOB
 #define BUZZER_Pin GPIO_PIN_8
 #define BUZZER_GPIO_Port GPIOB
 #define LOADMAZE_SW3_Pin GPIO_PIN_9

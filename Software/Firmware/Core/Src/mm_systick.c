@@ -21,20 +21,20 @@ extern int32_t objective_R;
 
 extern volatile uint16_t buzzerDelay;
 
-const uint8_t UPDATE_DELAY_MS = 10;
+const uint8_t UPDATE_DELAY_MS = 100;
 uint32_t prev_time = 0;
 
 void Systick() {
 	global_time = HAL_GetTick();
 
-//	if (global_time == prev_time + UPDATE_DELAY_MS) {
-//		Poll_Sensors(&mouse_state);
-//		mouse_state.battery_voltage = Read_Battery();
-//		mouse_state.motor_L_RPM = Calculate_RPM(objective_L, MOTOR_LEFT);
-//		mouse_state.motor_R_RPM = Calculate_RPM(objective_R, MOTOR_RIGHT);
-//
-//		prev_time = global_time;
-//	}
+	if (global_time == prev_time + UPDATE_DELAY_MS) {
+		Poll_Sensors(&mouse_state);
+		mouse_state.battery_voltage = Read_Battery();
+		mouse_state.motor_L_RPM = Calculate_RPM(objective_L, MOTOR_LEFT);
+		mouse_state.motor_R_RPM = Calculate_RPM(objective_R, MOTOR_RIGHT);
+
+		prev_time = global_time;
+	}
 
 	Debug_Mode();
 	Buzzer_Check();

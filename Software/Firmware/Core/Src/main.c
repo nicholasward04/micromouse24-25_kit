@@ -138,8 +138,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  Set_Direction(MOTOR_LEFT, FORWARD);
+	  Set_Direction(MOTOR_RIGHT, FORWARD);
     /* USER CODE END WHILE */
-
+	  for (int i=300; i < 2048; ++i) {
+		  Set_PWM(MOTOR_LEFT, i);
+		  Set_PWM(MOTOR_RIGHT, i);
+		  HAL_Delay(500);
+	  }
     /* USER CODE BEGIN 3 */
 
   }
