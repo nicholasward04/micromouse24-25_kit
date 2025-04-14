@@ -27,6 +27,7 @@
 #include "mm_systick.h"
 #include "mm_motors.h"
 #include "mm_encoders.h"
+#include "mm_floodfill.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -80,12 +81,25 @@ uint8_t debugCounter = 0;
 
 // Global
 uint32_t global_time = 0;
+bool armed = false;
+
 
 // Encoders
 int32_t objective_L = 0;
 int32_t objective_R = 0;
 int32_t prev_obj_L = 0;
 int32_t prev_obj_R = 0;
+
+// IRs
+uint16_t cal_FL = 0;
+uint16_t cal_L = 0;
+uint16_t cal_R = 0;
+uint16_t cal_FR = 0;
+
+// Maze-Solving
+struct Maze maze;
+uint8_t goal_swap = 0;
+bool searching = true;
 
 /* USER CODE END 0 */
 
@@ -132,20 +146,17 @@ int main(void)
 
   HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+
+  Maze_Init(&maze);
+  Set_Goal_Cell(&maze, 4);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  Set_Direction(MOTOR_LEFT, FORWARD);
-	  Set_Direction(MOTOR_RIGHT, FORWARD);
     /* USER CODE END WHILE */
-	  for (int i=300; i < 2048; ++i) {
-		  Set_PWM(MOTOR_LEFT, i);
-		  Set_PWM(MOTOR_RIGHT, i);
-		  HAL_Delay(500);
-	  }
+
     /* USER CODE BEGIN 3 */
 
   }
@@ -521,11 +532,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_Power_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : SPEED_SW2_Pin */
-  GPIO_InitStruct.Pin = SPEED_SW2_Pin;
+  /*Configure GPIO pin : RACE_SW2_Pin */
+  GPIO_InitStruct.Pin = RACE_SW2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(SPEED_SW2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(RACE_SW2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EMIT_R_Pin EMIT_L_Pin EMIT_FL_Pin MR_FWD_Pin
                            ML_FWD_Pin MR_BWD_Pin EMIT_FR_Pin BUZZER_Pin */
@@ -567,6 +578,18 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (GPIO_Pin == ARM_SW1_Pin) {       // Set to arm mode
+		ARM_Button();
+	}
+	else if (GPIO_Pin == RACE_SW2_Pin) { // Set to race mode
+		RACE_Button();
+	}
+	else if (GPIO_Pin == LOADMAZE_SW3_Pin) { // Load maze from memory into maze struct
+		LOADMAZE_Button();
+	}
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	UART_Receive_Callback(huart);
 }

@@ -15,6 +15,8 @@ extern uint8_t debugCounter;
 
 extern mouse_state_t mouse_state;
 
+extern bool armed;
+
 uint8_t txData = 0xFF;
 uint8_t rxData = 0;
 
@@ -41,8 +43,7 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 			debugCounter = 0;
 			break;
 		case HALT_RUN:
-			HALTED = 1;
-			while (HALTED);
+			armed = false;
 			break;
 		case RESUME_RUN:
 			HALTED = 0;
@@ -54,7 +55,7 @@ void Parse_Receive_Data(uint8_t rxBuff) {
 			Pulse_Buzzer(100);
 			break;
 		case START_RUN:
-			// SET RUN START VAR TO TRUE
+			armed = true;
 			break;
 		case PAIRED:
 			break;

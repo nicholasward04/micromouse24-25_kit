@@ -8,6 +8,8 @@
 volatile uint16_t buzzerDelay = 0;
 
 extern ADC_HandleTypeDef hadc2;
+extern bool searching;
+extern bool armed;
 
 void LED_Power_Init() {
 	HAL_GPIO_TogglePin(LED_Power_GPIO_Port, LED_Power_Pin);
@@ -19,7 +21,7 @@ void Reset_Buffers(uint8_t rxBuff, uint8_t txBuff) {
 }
 
 void Pulse_Buzzer(uint16_t delay) {
-	//HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
 	buzzerDelay = delay;
 }
 
@@ -44,3 +46,20 @@ double Read_Battery() {
 	return ((raw_adc / 4095.0) * 3.3) * 3.5;
 }
 
+void ARM_Button() {
+	armed = true;
+	for (uint8_t i=0; i < 10; i++) {
+		LED_Red_Toggle();
+		HAL_Delay(500);
+	}
+}
+
+void RACE_Button() {
+	searching = false;
+	LED_Blue_Toggle();
+	HAL_Delay(1000);
+}
+
+void LOADMAZE_Button() {
+	// TODO: Implement load from flash
+}

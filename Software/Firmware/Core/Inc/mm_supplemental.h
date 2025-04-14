@@ -17,4 +17,8 @@ void LED_Blue_Toggle();
 
 double Read_Battery();
 
+void ARM_Button();
+void RACE_Button();
+void LOADMAZE_Button();
+
 #endif

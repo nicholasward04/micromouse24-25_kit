@@ -19,4 +19,8 @@ typedef enum { // Enumeration for IR cases
 uint16_t Measure_Distance(dist_t dist);
 void Poll_Sensors(mouse_state_t* mouse_state);
 
+bool Wall_Front();
+bool Wall_Left();
+bool Wall_Right();
+
 #endif /* INC_MM_VISION_H_ */

@@ -4,13 +4,31 @@
  */
 
 #include "mm_vision.h"
+#include "mm_systick.h"
 
 extern ADC_HandleTypeDef hadc1;
 
-extern uint16_t raw_FL;
-extern uint16_t raw_L;
-extern uint16_t raw_R;
-extern uint16_t raw_FR;
+extern mouse_state_t mouse_state;
+
+extern uint16_t cal_FL;
+extern uint16_t cal_L;
+extern uint16_t cal_R;
+extern uint16_t cal_FR;
+
+// Calibration Values (determined before runtime)
+uint16_t translation_FL = 0;
+uint16_t translation_L = 0;
+uint16_t translation_R = 0;
+uint16_t translation_FR = 0;
+
+// Wall Thresholds
+uint16_t wall_front_thresh = 100;
+uint16_t wall_left_thresh = 100;
+uint16_t wall_right_thresh = 100;
+
+bool wall_front = false;
+bool wall_left = false;
+bool wall_right = false;
 
 static void ADC1_Select_CH9(void) {
 	ADC_ChannelConfTypeDef sConfig = {0};
@@ -96,9 +114,60 @@ uint16_t Measure_Dist(dist_t dist) { // Poll raw IR sensors
 	return adc_val;
 }
 
+void Calibrate_Readings(mouse_state_t* mouse_state) { // Calibrate raw IR values
+	cal_FL = 200 / translation_FL;
+	cal_L = 100 / translation_L;
+	cal_R = 100 / translation_R;
+	cal_FR = 200 / translation_FR;
+}
+
 void Poll_Sensors(mouse_state_t* mouse_state){ // Gather all raw IR values
 	mouse_state->raw_FL = Measure_Dist(DIST_FL);
 	mouse_state->raw_L = Measure_Dist(DIST_L);
 	mouse_state->raw_R = Measure_Dist(DIST_R);
 	mouse_state->raw_FR = Measure_Dist(DIST_FR);
+
+	Calibrate_Readings(mouse_state);
+}
+
+bool Wall_Front() {
+	Poll_Sensors(&mouse_state);
+	uint16_t front_avg = (cal_FL + cal_FR) / 2;
+	if (front_avg > wall_front_thresh) {
+		wall_front = true;
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, 0);
+
+	}
+	else {
+		wall_front = false;
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, 1);
+	}
+	return wall_front;
+}
+
+bool Wall_Left() {
+	Poll_Sensors(&mouse_state);
+	if (cal_L > wall_left_thresh) {
+		wall_left = true;
+		HAL_GPIO_WritePin(LED_Green_GPIO_Port, LED_Green_Pin, 0);
+	}
+	else {
+		wall_left = false;
+		HAL_GPIO_WritePin(LED_Green_GPIO_Port, LED_Green_Pin, 1);
+	}
+	return wall_left;
+}
+
+bool Wall_Right() {
+	Poll_Sensors(&mouse_state);
+	if (cal_R > wall_right_thresh) {
+		wall_right = true;
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, 0);
+
+	}
+	else {
+		wall_right = false;
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, 1);
+	}
+	return wall_right;
 }

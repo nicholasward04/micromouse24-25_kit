@@ -28,12 +28,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
 	uint16_t current_count = __HAL_TIM_GET_COUNTER(htim);
 	if (htim == &htim4) { // Motor right
 		prev_obj_R = objective_R;
-		objective_R += (int16_t)(current_count - counter_R);
+		objective_R -= (int16_t)(current_count - counter_R);
 		counter_R = current_count;
 	}
 	if (htim == &htim3) { // Motor left
 		prev_obj_L = objective_L;
-		objective_L += (int16_t)(current_count - counter_L);
+		objective_L -= (int16_t)(current_count - counter_L);
 		counter_L = current_count;
 	}
 }

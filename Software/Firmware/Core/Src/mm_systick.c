@@ -54,6 +54,6 @@ void Buzzer_Check() {
 		buzzerDelay--;
 	}
 	else {
-		//HAL_GPIO_WritePin(Buzzer_GPIO_Port, Buzzer_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
 	}
 }
