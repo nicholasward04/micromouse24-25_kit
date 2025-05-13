@@ -9,6 +9,7 @@
 #include "mm_supplemental.h"
 #include "mm_motors.h"
 #include "mm_encoders.h"
+#include "mm_profiles.h"
 
 extern uint8_t debugMode;
 extern uint8_t debugCounter;
@@ -21,29 +22,50 @@ extern int32_t objective_R;
 
 extern volatile uint16_t buzzerDelay;
 
-const uint8_t UPDATE_DELAY_MS = 100;
-uint32_t prev_time = 0;
+extern profile_t forward_profile;
+extern profile_t rotational_profile;
+
+extern float steering_adjustment;
+
+const uint8_t UPDATE_DELAY_MS = 2;
+uint32_t time_last_updated_ms = 0;
 
 void Systick() {
 	global_time = HAL_GetTick();
 
-	if (global_time == prev_time + UPDATE_DELAY_MS) {
-		Poll_Sensors(&mouse_state);
-		mouse_state.battery_voltage = Read_Battery();
-		mouse_state.motor_L_RPM = Calculate_RPM(objective_L, MOTOR_LEFT);
-		mouse_state.motor_R_RPM = Calculate_RPM(objective_R, MOTOR_RIGHT);
-
-		prev_time = global_time;
-	}
-
 	Debug_Mode();
 	Buzzer_Check();
+
+	if (global_time > time_last_updated_ms + UPDATE_DELAY_MS) {
+		// Update distance traveled and angle turned
+		Update_Encoders();
+		// Update forward and rotational profile
+		Update_Profile(&forward_profile);
+		Update_Profile(&rotational_profile);
+		// Update IR sensor readings and check for walls
+		Poll_Sensors(&mouse_state);
+
+		Wall_Front();
+		Wall_Left();
+		Wall_Right();
+
+		Calculate_Error();
+		// Update battery voltage
+		mouse_state.battery_voltage = Read_Battery();
+		// Update motor voltages
+		Update_Motors(forward_profile.speed, rotational_profile.speed, steering_adjustment);
+
+		time_last_updated_ms = global_time;
+	}
 }
 
 void Debug_Mode() {
 	if (debugMode) {
 		debugCounter = (debugCounter + 1) % DEBUG_PERIOD;
 		if (debugCounter == 0) {
+			mouse_state.rpm.left_rpm = Calculate_RPM(objective_L, MOTOR_LEFT);
+			mouse_state.rpm.right_rpm  = Calculate_RPM(objective_R, MOTOR_RIGHT);
+
 			Debug_Packet_Send();
 		}
 	}

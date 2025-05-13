@@ -15,6 +15,7 @@ void LED_Red_Toggle();
 void LED_Green_Toggle();
 void LED_Blue_Toggle();
 
+float Calculate_Battery_Bias(float commanded_voltage);
 double Read_Battery();
 
 void ARM_Button();

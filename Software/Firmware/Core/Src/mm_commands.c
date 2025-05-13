@@ -69,15 +69,15 @@ void Create_Byte_Stream(uint8_t txData[PACKET_SIZE]) {
 
 	memcpy(txData, "Debug", 5);
 	memcpy(txData + 5, &mouse_state.current_cell, sizeof(uint8_t));
-	memcpy(txData + 6, &mouse_state.motor_L_RPM, sizeof(uint16_t));
-	memcpy(txData + 8, &mouse_state.motor_R_RPM, sizeof(uint16_t));
+	memcpy(txData + 6, &mouse_state.rpm.left_rpm, sizeof(uint16_t));
+	memcpy(txData + 8, &mouse_state.rpm.right_rpm, sizeof(uint16_t));
 	memcpy(txData + 10, &mouse_state.mouse_direction, sizeof(uint8_t));
 	memset(txData + 11, ((mouse_state.mouse_position[0] << 4) | mouse_state.mouse_position[1]), sizeof(uint8_t));
 	memcpy(txData + 12, &mouse_state.battery_voltage, sizeof(double));
-	memcpy(txData + 20, &mouse_state.raw_FL, sizeof(uint16_t));
-	memcpy(txData + 22, &mouse_state.raw_L, sizeof(uint16_t));
-	memcpy(txData + 24, &mouse_state.raw_R, sizeof(uint16_t));
-	memcpy(txData + 26, &mouse_state.raw_FR, sizeof(uint16_t));
+	memcpy(txData + 20, &mouse_state.raw.front_left, sizeof(uint16_t));
+	memcpy(txData + 22, &mouse_state.raw.left, sizeof(uint16_t));
+	memcpy(txData + 24, &mouse_state.raw.right, sizeof(uint16_t));
+	memcpy(txData + 26, &mouse_state.raw.front_right, sizeof(uint16_t));
 }
 
 // When mouse in debug mode transmit above data.

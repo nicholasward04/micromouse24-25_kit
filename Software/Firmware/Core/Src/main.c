@@ -28,6 +28,7 @@
 #include "mm_motors.h"
 #include "mm_encoders.h"
 #include "mm_floodfill.h"
+#include "mm_profiles.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,24 +84,18 @@ uint8_t debugCounter = 0;
 uint32_t global_time = 0;
 bool armed = false;
 
-
 // Encoders
 int32_t objective_L = 0;
 int32_t objective_R = 0;
-int32_t prev_obj_L = 0;
-int32_t prev_obj_R = 0;
-
-// IRs
-uint16_t cal_FL = 0;
-uint16_t cal_L = 0;
-uint16_t cal_R = 0;
-uint16_t cal_FR = 0;
 
 // Maze-Solving
 struct Maze maze;
 uint8_t goal_swap = 0;
 bool searching = true;
 
+// Profiles
+profile_t forward_profile;
+profile_t rotational_profile;
 /* USER CODE END 0 */
 
 /**
@@ -147,8 +142,25 @@ int main(void)
   HAL_TIM_Encoder_Start_IT(&htim4, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
 
+  // Initialize maze and set initial goal cells (center of 16x16 maze)
   Maze_Init(&maze);
   Set_Goal_Cell(&maze, 4);
+
+  // Initialize mouse state to 0
+  bzero(&mouse_state, sizeof(mouse_state_t));
+
+  Clear_Profile(&forward_profile);
+  Clear_Profile(&rotational_profile);
+
+  param_t test_parameters_forward = {.acceleration = 200,
+  	  	  	  	  	  	  	 	 	 .distance = 500,
+									 .max_speed = 300,
+									 .end_speed = 0 };
+
+  param_t test_parameters_rotational = {.acceleration = 100,
+  	  	  	  	  	  	  	 	 	 	.distance = 90,
+										.max_speed = 50,
+										.end_speed = 0 };
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -156,7 +168,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  if (armed) {
+		  Profile_Container(&test_parameters_forward, &forward_profile);
+		  Profile_Container(&test_parameters_rotational, &rotational_profile);
+		  LED_Green_Toggle();
+		  armed = false;
+	  }
     /* USER CODE BEGIN 3 */
 
   }

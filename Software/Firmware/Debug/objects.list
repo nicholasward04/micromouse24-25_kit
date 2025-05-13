@@ -3,6 +3,7 @@
 "./Core/Src/mm_encoders.o"
 "./Core/Src/mm_floodfill.o"
 "./Core/Src/mm_motors.o"
+"./Core/Src/mm_profiles.o"
 "./Core/Src/mm_supplemental.o"
 "./Core/Src/mm_systick.o"
 "./Core/Src/mm_vision.o"

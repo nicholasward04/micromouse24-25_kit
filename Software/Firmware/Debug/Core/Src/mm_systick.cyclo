@@ -1,3 +1,3 @@
-../Core/Src/mm_systick.c:27:6:Systick	2
-../Core/Src/mm_systick.c:43:6:Debug_Mode	3
-../Core/Src/mm_systick.c:52:6:Buzzer_Check	2
+../Core/Src/mm_systick.c:33:6:Systick	2
+../Core/Src/mm_systick.c:62:6:Debug_Mode	3
+../Core/Src/mm_systick.c:74:6:Buzzer_Check	2

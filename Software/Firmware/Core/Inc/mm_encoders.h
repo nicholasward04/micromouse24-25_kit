@@ -10,5 +10,6 @@
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 uint16_t Calculate_RPM(int32_t current_ticks, uint8_t motor);
+void Update_Encoders();
 
 #endif /* INC_MM_ENCODERS_H_ */

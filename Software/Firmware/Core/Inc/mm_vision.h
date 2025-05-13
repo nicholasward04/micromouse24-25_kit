@@ -23,4 +23,7 @@ bool Wall_Front();
 bool Wall_Left();
 bool Wall_Right();
 
+void Calculate_Steering_Adjustment(int error);
+void Calculate_Error();
+
 #endif /* INC_MM_VISION_H_ */
