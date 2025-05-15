@@ -84,6 +84,9 @@ uint8_t debugCounter = 0;
 uint32_t global_time = 0;
 bool armed = false;
 
+// IRs
+extern bool adjust_steering;
+
 // Encoders
 int32_t objective_L = 0;
 int32_t objective_R = 0;
@@ -152,14 +155,19 @@ int main(void)
   Clear_Profile(&forward_profile);
   Clear_Profile(&rotational_profile);
 
-  param_t test_parameters_forward = {.acceleration = 200,
-  	  	  	  	  	  	  	 	 	 .distance = 500,
-									 .max_speed = 300,
-									 .end_speed = 0 };
+  param_t test_parameters_forward = {.acceleration = 1000,
+  	  	  	  	  	  	  	 	 	 .distance = 125,
+									 .max_speed = 700,
+									 .end_speed = 300 };
 
-  param_t test_parameters_rotational = {.acceleration = 100,
+  param_t test_parameters_forward_2 = {.acceleration = 1000,
+    	  	  	  	  	  	  	 	 	 .distance = 125/3,
+  									 .max_speed = 700,
+  									 .end_speed = 0 };
+
+  param_t test_parameters_rotational = {.acceleration = 2000,
   	  	  	  	  	  	  	 	 	 	.distance = 90,
-										.max_speed = 50,
+										.max_speed = 300,
 										.end_speed = 0 };
   /* USER CODE END 2 */
 
@@ -168,14 +176,20 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if (armed) {
-		  Profile_Container(&test_parameters_forward, &forward_profile);
-		  Profile_Container(&test_parameters_rotational, &rotational_profile);
-		  LED_Green_Toggle();
-		  armed = false;
-	  }
-    /* USER CODE BEGIN 3 */
 
+    /* USER CODE BEGIN 3 */
+	  if (armed) {
+		  adjust_steering = true;
+		  Profile_Container(&test_parameters_forward, &forward_profile);
+		  Profile_Container(&test_parameters_forward, &forward_profile);
+		  Profile_Container(&test_parameters_forward, &forward_profile);
+		  Profile_Container(&test_parameters_forward_2, &forward_profile);
+		  Profile_Container(&test_parameters_rotational, &rotational_profile);
+		  Profile_Container(&test_parameters_forward_2, &forward_profile);
+		  Profile_Container(&test_parameters_forward, &forward_profile);
+		  armed = false;
+		  adjust_steering = false;
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -533,8 +547,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LED_Power_GPIO_Port, LED_Power_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
-                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|BUZZER_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, EMIT_L_Pin|EMIT_R_Pin|EMIT_FR_Pin|MR_FWD_Pin
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FL_Pin|BUZZER_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ML_BWD_GPIO_Port, ML_BWD_Pin, GPIO_PIN_RESET);
@@ -555,10 +569,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(RACE_SW2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EMIT_R_Pin EMIT_L_Pin EMIT_FL_Pin MR_FWD_Pin
-                           ML_FWD_Pin MR_BWD_Pin EMIT_FR_Pin BUZZER_Pin */
-  GPIO_InitStruct.Pin = EMIT_R_Pin|EMIT_L_Pin|EMIT_FL_Pin|MR_FWD_Pin
-                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FR_Pin|BUZZER_Pin;
+  /*Configure GPIO pins : EMIT_L_Pin EMIT_R_Pin EMIT_FR_Pin MR_FWD_Pin
+                           ML_FWD_Pin MR_BWD_Pin EMIT_FL_Pin BUZZER_Pin */
+  GPIO_InitStruct.Pin = EMIT_L_Pin|EMIT_R_Pin|EMIT_FR_Pin|MR_FWD_Pin
+                          |ML_FWD_Pin|MR_BWD_Pin|EMIT_FL_Pin|BUZZER_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

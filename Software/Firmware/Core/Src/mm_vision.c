@@ -14,21 +14,21 @@ extern mouse_state_t mouse_state;
 extern float SYSTICK_FREQUENCY;
 
 const uint8_t FRONT_WALL_LIMIT = 100; // If front wall too close, disable IR correction due to increase in reflection
-const float STEERING_ADJUSTMENT_LIMIT = 10.0f; // In degrees
+const float STEERING_ADJUSTMENT_LIMIT = 5.0f; // In degrees
 
-const float IR_KP = 0.25f;
+const float IR_KP = 0.001f;
 const float IR_KD = 0.0f;
 
 // Translation Values (determined before runtime)
-uint16_t translation_FL = 500;
-uint16_t translation_L = 500;
-uint16_t translation_R = 500;
-uint16_t translation_FR = 500;
+uint16_t translation_FL = 130;
+uint16_t translation_L = 220;
+uint16_t translation_R = 220;
+uint16_t translation_FR = 130;
 
 // Wall Thresholds
-uint16_t wall_front_thresh = 20;
-uint16_t wall_left_thresh = 40;
-uint16_t wall_right_thresh = 40;
+uint16_t wall_front_thresh = 80;
+uint16_t wall_left_thresh = 20;
+uint16_t wall_right_thresh = 20;
 
 bool wall_front = false;
 bool wall_left = false;
@@ -90,22 +90,22 @@ uint16_t Measure_Dist(dist_t dist) { // Poll raw IR sensors
 	case DIST_FL:
 		emitter_port = EMIT_FL_GPIO_Port;
 		emitter_pin = EMIT_FL_Pin;
-		ADC1_Select_CH9();
+		ADC1_Select_CH4();
 		break;
 	case DIST_L:
 		emitter_port = EMIT_L_GPIO_Port;
 		emitter_pin = EMIT_L_Pin;
-		ADC1_Select_CH8();
+		ADC1_Select_CH5();
 		break;
 	case DIST_R:
 		emitter_port = EMIT_R_GPIO_Port;
 		emitter_pin = EMIT_R_Pin;
-		ADC1_Select_CH5();
+		ADC1_Select_CH8();
 		break;
 	case DIST_FR:
 		emitter_port = EMIT_FR_GPIO_Port;
 		emitter_pin = EMIT_FR_Pin;
-		ADC1_Select_CH4();
+		ADC1_Select_CH9();
 		break;
 	default:
 		break;
@@ -123,10 +123,10 @@ uint16_t Measure_Dist(dist_t dist) { // Poll raw IR sensors
 }
 
 void Calibrate_Readings(mouse_state_t* mouse_state) { // Normalize raw IR values
-	mouse_state->cal.front_left  = 200 * (mouse_state->raw.front_left / translation_FL);
-	mouse_state->cal.left        = 100 * (mouse_state->raw.left / translation_L);
-	mouse_state->cal.right       = 100 * (mouse_state->raw.right / translation_R);
-	mouse_state->cal.front_right = 200 * (mouse_state->raw.front_right / translation_FR);
+	mouse_state->cal.front_left  = 200 * ((float)mouse_state->raw.front_left / (float)translation_FL);
+	mouse_state->cal.left        = 100 * ((float)mouse_state->raw.left / (float)translation_L);
+	mouse_state->cal.right       = 100 * ((float)mouse_state->raw.right / (float)translation_R);
+	mouse_state->cal.front_right = 200 * ((float)mouse_state->raw.front_right / (float)translation_FR);
 }
 
 void Poll_Sensors(mouse_state_t* mouse_state){ // Gather all raw IR values
@@ -143,12 +143,12 @@ bool Wall_Front() {
 	uint16_t front_avg = (mouse_state.cal.front_left + mouse_state.cal.front_right) / 2;
 	if (front_avg > wall_front_thresh) {
 		wall_front = true;
-		LED_Blue_Toggle();
+		HAL_GPIO_WritePin(LED_Green_GPIO_Port, LED_Green_Pin, GPIO_PIN_RESET);
 
 	}
 	else {
 		wall_front = false;
-		LED_Blue_Toggle();
+		HAL_GPIO_WritePin(LED_Green_GPIO_Port, LED_Green_Pin, GPIO_PIN_SET);
 	}
 	return wall_front;
 }
@@ -157,11 +157,11 @@ bool Wall_Left() {
 	Poll_Sensors(&mouse_state);
 	if (mouse_state.cal.left > wall_left_thresh) {
 		wall_left = true;
-		LED_Green_Toggle();
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, GPIO_PIN_RESET);
 	}
 	else {
 		wall_left = false;
-		LED_Green_Toggle();
+		HAL_GPIO_WritePin(LED_Red_GPIO_Port, LED_Red_Pin, GPIO_PIN_SET);
 	}
 	return wall_left;
 }
@@ -170,18 +170,18 @@ bool Wall_Right() {
 	Poll_Sensors(&mouse_state);
 	if (mouse_state.cal.right > wall_right_thresh) {
 		wall_right = true;
-		LED_Red_Toggle();
+		HAL_GPIO_WritePin(LED_Blue_GPIO_Port, LED_Blue_Pin, GPIO_PIN_RESET);
 
 	}
 	else {
 		wall_right = false;
-		LED_Red_Toggle();
+		HAL_GPIO_WritePin(LED_Blue_GPIO_Port, LED_Blue_Pin, GPIO_PIN_SET);
 	}
 	return wall_right;
 }
 
 void Calculate_Steering_Adjustment(int error) {
-	float adjustment = IR_KP * error + IR_KD * (error - prev_error) * SYSTICK_FREQUENCY;
+	float adjustment = IR_KP * error - IR_KD * (error - prev_error) * SYSTICK_FREQUENCY;
 	prev_error = error;
 
 	adjustment = adjustment > STEERING_ADJUSTMENT_LIMIT ? STEERING_ADJUSTMENT_LIMIT: adjustment;
@@ -200,7 +200,7 @@ void Calculate_Error() {
 			error = left_error - right_error;
 		}
 		else if (wall_left) {
-			error = 2 * left_error;
+			error = -2 * left_error;
 		}
 		else if (wall_right) {
 			error = 2 * right_error;

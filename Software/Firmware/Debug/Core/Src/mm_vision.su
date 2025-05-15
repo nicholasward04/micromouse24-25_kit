@@ -3,7 +3,7 @@
 ../Core/Src/mm_vision.c:63:13:ADC1_Select_CH5	24	static
 ../Core/Src/mm_vision.c:74:13:ADC1_Select_CH4	24	static
 ../Core/Src/mm_vision.c:85:10:Measure_Dist	24	static
-../Core/Src/mm_vision.c:125:6:Calibrate_Readings	16	static
+../Core/Src/mm_vision.c:125:6:Calibrate_Readings	24	static
 ../Core/Src/mm_vision.c:132:6:Poll_Sensors	16	static
 ../Core/Src/mm_vision.c:141:6:Wall_Front	16	static
 ../Core/Src/mm_vision.c:156:6:Wall_Left	8	static

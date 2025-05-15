@@ -1,7 +1,7 @@
-../Core/Src/mm_motors.c:57:6:Set_Motor_Volts	32	static
-../Core/Src/mm_motors.c:75:6:Set_PWM	16	static
-../Core/Src/mm_motors.c:88:6:Set_Direction	16	static
-../Core/Src/mm_motors.c:125:7:Position_Controller	32	static
-../Core/Src/mm_motors.c:134:7:Rotational_Controller	32	static
-../Core/Src/mm_motors.c:144:7:Feed_Forward	32	static
-../Core/Src/mm_motors.c:161:6:Update_Motors	56	static
+../Core/Src/mm_motors.c:59:6:Set_Motor_Volts	32	static
+../Core/Src/mm_motors.c:76:6:Set_PWM	16	static
+../Core/Src/mm_motors.c:90:6:Set_Direction	16	static
+../Core/Src/mm_motors.c:127:7:Position_Controller	32	static
+../Core/Src/mm_motors.c:136:7:Rotational_Controller	40	static
+../Core/Src/mm_motors.c:146:7:Feed_Forward	32	static
+../Core/Src/mm_motors.c:163:6:Update_Motors	64	static
