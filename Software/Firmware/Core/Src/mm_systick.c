@@ -14,6 +14,7 @@
 extern uint8_t debugMode;
 extern uint8_t debugCounter;
 extern mouse_state_t mouse_state;
+extern float SYSTICK_INTERVAL;
 
 extern uint32_t global_time;
 
@@ -27,7 +28,6 @@ extern profile_t rotational_profile;
 
 extern float steering_adjustment;
 
-const uint8_t UPDATE_DELAY_MS = 2;
 uint32_t time_last_updated_ms = 0;
 
 void Systick() {
@@ -36,7 +36,7 @@ void Systick() {
 	Debug_Mode();
 	Buzzer_Check();
 
-	if (global_time > time_last_updated_ms + UPDATE_DELAY_MS) {
+	if (global_time > time_last_updated_ms + (SYSTICK_INTERVAL * 1000)) {
 		// Update distance traveled and angle turned
 		Update_Encoders();
 		// Update forward and rotational profile

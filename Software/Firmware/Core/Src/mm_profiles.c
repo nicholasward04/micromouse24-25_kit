@@ -49,11 +49,16 @@ void Start_Profile(param_t* parameters, profile_t* profile) {
 void Profile_Container(param_t* parameters, profile_t* profile) {
 	float original_position = mouse_position;
 	Start_Profile(parameters, profile);
-	while (profile->state != COMPLETE) {
-		HAL_Delay(2);
-	}
+	while (profile->state != COMPLETE);
 	float delta_position = mouse_position - original_position;
 	on_completion_error_forward = parameters->distance - delta_position;
+}
+
+void Smooth_Turn_Container(param_t* fwd_parameters, param_t* rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
+	Start_Profile(fwd_parameters, fwd_profile);
+	Start_Profile(rot_parameters, rot_profile);
+	while (rot_profile->state != COMPLETE && fwd_profile->state != COMPLETE);
+	Profile_Container(fwd_parameters, fwd_profile);
 }
 
 float Calculate_Braking_Distance(float current_speed, float end_speed, float inverse_acceleration) {
