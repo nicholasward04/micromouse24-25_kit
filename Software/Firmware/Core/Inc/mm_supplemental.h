@@ -8,6 +8,20 @@
 #ifndef INC_MM_SUPPLEMENTAL_H_
 #define INC_MM_SUPPLEMENTAL_H_
 
+typedef enum {
+	SEARCHING = 0,
+	RACING = 1,
+	TEST = 2,
+} mouse_mode_t;
+
+typedef enum {
+	FORWARD_DRIVE = 0,
+	RIGHT_TURN = 1,
+	LEFT_TURN = 2,
+	ABOUT_FACE = 3,
+	NONE = 4
+} prev_action_t;
+
 void LED_Power_Init();
 void Reset_Buffers(uint8_t rxBuff, uint8_t txBuff);
 void Pulse_Buzzer(uint16_t delay);

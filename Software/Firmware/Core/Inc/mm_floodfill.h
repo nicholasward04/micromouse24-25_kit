@@ -43,6 +43,7 @@ struct Maze {
     enum Direction mouse_dir;
     int distances[16][16];
     int cellWalls[16][16];
+    bool exploredCells[16][16];
     struct Coord goalPos[4];
 };
 
@@ -54,5 +55,8 @@ void Set_Goal_Cell(struct Maze* maze, int num_of_goals);
 void Floodfill(struct Maze* maze);
 enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos);
 void Maze_Init(struct Maze* maze);
+
+void Search_Mode(struct Maze* maze);
+void Race_Mode(struct Maze* maze);
 
 #endif /* INC_MM_FLOODFILL_H_ */

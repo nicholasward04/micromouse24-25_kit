@@ -6,8 +6,10 @@
 #include "mm_vision.h"
 #include "mm_systick.h"
 #include "mm_supplemental.h"
+#include "mm_profiles.h"
 
 extern ADC_HandleTypeDef hadc1;
+extern profile_t rotational_profile;
 
 extern mouse_state_t mouse_state;
 
@@ -17,25 +19,23 @@ const uint8_t FRONT_WALL_LIMIT = 100; // If front wall too close, disable IR cor
 const float STEERING_ADJUSTMENT_LIMIT = 5.0f; // In degrees
 
 const float IR_KP = 0.001f;
-const float IR_KD = 0.0f;
 
 // Translation Values (determined before runtime)
-uint16_t translation_FL = 130;
-uint16_t translation_L = 220;
-uint16_t translation_R = 220;
-uint16_t translation_FR = 130;
+uint16_t translation_FL = 409;
+uint16_t translation_L = 845;
+uint16_t translation_R = 500;
+uint16_t translation_FR = 437;
 
 // Wall Thresholds
-uint16_t wall_front_thresh = 80;
-uint16_t wall_left_thresh = 20;
-uint16_t wall_right_thresh = 20;
+uint16_t wall_front_thresh = 100;
+uint16_t wall_left_thresh = 60;
+uint16_t wall_right_thresh = 60;
 
 bool wall_front = false;
 bool wall_left = false;
 bool wall_right = false;
 
 bool adjust_steering = false;
-float prev_error = 0;
 float steering_adjustment = 0;
 
 static void ADC1_Select_CH9(void) {
@@ -181,13 +181,12 @@ bool Wall_Right() {
 }
 
 void Calculate_Steering_Adjustment(int error) {
-	float adjustment = IR_KP * error - IR_KD * (error - prev_error) * SYSTICK_FREQUENCY;
-	prev_error = error;
+	float adjustment = IR_KP * error;
 
 	adjustment = adjustment > STEERING_ADJUSTMENT_LIMIT ? STEERING_ADJUSTMENT_LIMIT: adjustment;
 	adjustment = adjustment < -STEERING_ADJUSTMENT_LIMIT ? -STEERING_ADJUSTMENT_LIMIT: adjustment;
 
-	steering_adjustment = adjustment;
+	steering_adjustment = rotational_profile.state == COMPLETE || rotational_profile.state == IDLE ? adjustment : 0;
 }
 
 void Calculate_Error() {
@@ -197,7 +196,7 @@ void Calculate_Error() {
 
 	if (adjust_steering) {
 		if (wall_left && wall_right) {
-			error = left_error - right_error;
+			error = right_error - left_error;
 		}
 		else if (wall_left) {
 			error = -2 * left_error;
@@ -205,10 +204,6 @@ void Calculate_Error() {
 		else if (wall_right) {
 			error = 2 * right_error;
 		}
-	}
-
-	if (((mouse_state.cal.front_left + mouse_state.cal.front_right) / 2) > FRONT_WALL_LIMIT) {
-		error = 0;
 	}
 
 	Calculate_Steering_Adjustment(error);

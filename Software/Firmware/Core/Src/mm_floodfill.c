@@ -7,13 +7,24 @@
 #include "mm_floodfill.h"
 #include "mm_systick.h"
 #include "mm_vision.h"
+#include "mm_supplemental.h"
+#include "mm_profiles.h"
 
 extern mouse_state_t mouse_state;
 extern struct Maze maze;
 
+extern profile_t forward_profile;
+extern profile_t rotational_profile;
+
+extern bool armed;
+
+extern bool wall_front;
+
 const uint8_t MAX_COST = 255;
 char dir_chars[4] = {'n', 'e', 's', 'w'};
 enum DirectionBitmask mask_array[4] = {NORTH_MASK, EAST_MASK, SOUTH_MASK, WEST_MASK};
+
+prev_action_t prev_action = ABOUT_FACE;
 
 bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
     if (mouse_pos_x < 0 || mouse_pos_x > 15 || mouse_pos_y < 0 || mouse_pos_y > 15) {
@@ -110,10 +121,14 @@ uint8_t Scan_Walls(struct Maze* maze) { // Checks wall information based on mous
 
 void Update_Mouse_Pos(struct Coord *pos, enum Direction dir)
 {
+	maze.exploredCells[pos->y][pos->x] = true;
+
     if      (dir == NORTH) { pos->y++; }
     else if (dir == SOUTH) { pos->y--; }
     else if (dir == WEST)  { pos->x--; }
     else if (dir == EAST)  { pos->x++; }
+
+    maze.exploredCells[pos->y][pos->x] = true;
 
     mouse_state.current_cell = maze.cellWalls[pos->y][pos->x];
 	mouse_state.mouse_position[0] = (uint8_t)pos->x;
@@ -188,4 +203,79 @@ void Maze_Init(struct Maze* maze) {
     for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0; } }            // Initialize all wall values to 0
     maze->mouse_dir = NORTH;                                                                                        // Mouse starting direction/pos always NORTH/{0,0}
     maze->mouse_pos = (struct Coord){0,0};
+}
+
+void Search_Mode(struct Maze* maze) {
+	Scan_Walls(maze);
+	Floodfill(maze);
+
+	enum Direction best_dir = Best_Cell(maze, maze->mouse_pos);
+
+	if (best_dir == (enum Direction)((maze->mouse_dir + 1) % 4)) { // Right Turn
+			Smooth_Turn_Container(SEARCH_FWD, SEARCH_ROT_RIGHT, &forward_profile, &rotational_profile);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 1) % 4);
+			prev_action = RIGHT_TURN;
+		}
+	else if (best_dir == (enum Direction)((maze->mouse_dir + 3) % 4)) { // Left Turn
+			Smooth_Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_LEFT, &forward_profile, &rotational_profile);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 3) % 4);
+			prev_action = LEFT_TURN;
+		}
+	else if (best_dir == (enum Direction)((maze->mouse_dir + 2) % 4)) { // About turn
+		if (wall_front) { // Back up into wall to realign, continue from there
+				Profile_Container(SEARCH_STOP_FWD, &forward_profile);
+				Profile_Container(ROT_ABOUT, &rotational_profile);
+				Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
+				maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
+				prev_action = ABOUT_FACE;
+			}
+		else { // If no wall, simply turn 180 degrees
+				Profile_Container(ROT_ABOUT, &rotational_profile);
+				maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
+				prev_action = NONE;
+			}
+	}
+
+	if (prev_action == FORWARD_DRIVE) { // Normal forward movement
+		Profile_Container(SEARCH_FWD, &forward_profile);
+	}
+	else if (prev_action == ABOUT_FACE){ // Distance to travel is less than after a forward movement or turn
+		Profile_Container(SEARCH_BACK_TO_WALL_FWD, &forward_profile);
+	}
+	else { // On a turn don't make any additional movement
+
+	}
+
+	prev_action = FORWARD_DRIVE;
+
+	Update_Mouse_Pos(&maze->mouse_pos, maze->mouse_dir);
+
+	// Check if mouse is in goal, if so change goal back to start location
+	if (maze->distances[maze->mouse_pos.y][maze->mouse_pos.x] == 0) {
+		if (!((maze->goalPos[0].x == 0) && (maze->goalPos[0].y == 0))) {
+			Set_Goal_Cell(maze, 1); // Change goal cell back to origin
+
+			// TODO: INSERT SAVE MAZE TO FLASH MEMORY HERE
+
+		}
+		else {
+			armed = false;
+			Set_Goal_Cell(maze, 4); // Change goal cell back to center of maze
+			maze->mouse_dir = NORTH;
+			// Reset mouse position to base position
+			// 180 then back up
+			// Set prev_action as BACKWARD
+			Profile_Container(SEARCH_STOP_FWD, &forward_profile);
+			Profile_Container(ROT_ABOUT, &rotational_profile);
+			Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
+
+			maze->mouse_dir = NORTH;
+			prev_action = ABOUT_FACE;
+		}
+	}
+
+}
+
+void Race_Mode(struct Maze* maze) {
+
 }

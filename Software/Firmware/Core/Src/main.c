@@ -94,11 +94,13 @@ int32_t objective_R = 0;
 // Maze-Solving
 struct Maze maze;
 uint8_t goal_swap = 0;
-bool searching = true;
+
+mouse_mode_t mouse_mode = TEST;
 
 // Profiles
 profile_t forward_profile;
 profile_t rotational_profile;
+
 /* USER CODE END 0 */
 
 /**
@@ -154,29 +156,6 @@ int main(void)
 
   Clear_Profile(&forward_profile);
   Clear_Profile(&rotational_profile);
-
-  param_t test_parameters_forward = {.acceleration = 2000,
-  	  	  	  	  	  	  	 	 	 .distance = 180,
-									 .max_speed = 800,
-									 .end_speed = 800 };
-
-  param_t test_parameters_forward_2 = {.acceleration = 2000,
-									   .distance = 50,
-									   .max_speed = 800,
-									   .end_speed = 800 };
-
-  param_t test_parameters_rotational = {.acceleration = 2000,
-  	  	  	  	  	  	  	 	 	 	.distance = 90,
-										.max_speed = 800,
-										.end_speed = 0 };
-  param_t test_parameters_forward_3 = {.acceleration = 2000,
-    	  	  	  	  	  	  	 	 	 .distance = 180,
-  									 .max_speed = 800,
-  									 .end_speed = 0 };
-  param_t test_parameters_rotational_2 = {.acceleration = 2000,
-    	  	  	  	  	  	  	 	 	 	.distance = -90,
-  										.max_speed = 800,
-  										.end_speed = 0 };
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -187,17 +166,15 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if (armed) {
-		  adjust_steering = true;
-		  Profile_Container(&test_parameters_forward, &forward_profile);
-		  Smooth_Turn_Container(&test_parameters_forward_2, &test_parameters_rotational, &forward_profile, &rotational_profile);
-		  Profile_Container(&test_parameters_forward, &forward_profile);
-		  Profile_Container(&test_parameters_forward, &forward_profile);
-		  Smooth_Turn_Container(&test_parameters_forward_2, &test_parameters_rotational_2, &forward_profile, &rotational_profile);
-		  Profile_Container(&test_parameters_forward, &forward_profile);
-		  Profile_Container(&test_parameters_forward_3, &forward_profile);
-
-		  armed = false;
-		  adjust_steering = false;
+		  switch (mouse_mode) {
+			  case TEST: // Mode for testing code without having to comment lines out
+				  break;
+			  case SEARCHING:
+				  Search_Mode(&maze);
+				  break;
+			  case RACING:
+				  break;
+		  }
 	  }
   }
   /* USER CODE END 3 */

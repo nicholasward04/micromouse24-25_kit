@@ -6,7 +6,7 @@
 #include "mm_supplemental.h"
 
 extern ADC_HandleTypeDef hadc2;
-extern bool searching;
+extern mouse_mode_t mouse_mode;
 extern bool armed;
 
 volatile uint16_t buzzerDelay = 0;
@@ -63,15 +63,25 @@ double Read_Battery() {
 }
 
 void ARM_Button() {
-	for (uint8_t i=0; i < 10; i++) {
+	for (uint8_t i=0; i < 5; i++) {
 		LED_Red_Toggle();
-		HAL_Delay(500);
+		HAL_Delay(1000);
 	}
 	armed = true;
 }
 
 void RACE_Button() {
-	searching = false;
+	switch (mouse_mode) {
+		case SEARCHING:
+			mouse_mode = RACING;
+			break;
+		case RACING:
+			mouse_mode = SEARCHING;
+			break;
+		default:
+			return;
+	}
+
 	LED_Blue_Toggle();
 	HAL_Delay(1000);
 }

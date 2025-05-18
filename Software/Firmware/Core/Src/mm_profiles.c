@@ -11,7 +11,10 @@ extern float SYSTICK_INTERVAL;
 extern profile_t forward_profile;
 extern profile_t rotational_profile;
 
+extern bool steering_adjustment;
+
 extern float mouse_position;
+extern float mouse_angle;
 
 float on_completion_error_forward = 0;
 float on_completion_error_rotational = 0;
@@ -22,42 +25,47 @@ void Clear_Profile(profile_t* profile) {
 	profile->direction = 1;
 }
 
-void Start_Profile(param_t* parameters, profile_t* profile) {
-	if (parameters->distance < 0) {
+void Start_Profile(param_t parameters, profile_t* profile) {
+	if (parameters.distance < 0) {
 		profile->direction = -1;
-		parameters->distance *= -1;
+		parameters.distance *= -1;
 	}
-	if (parameters->distance < 1.0) {
+	if (parameters.distance < 1.0) {
 		profile->state = COMPLETE;
 		return;
 	}
-	if (parameters->end_speed > parameters->max_speed) {
-		parameters->end_speed = parameters->max_speed;
+	if (parameters.end_speed > parameters.max_speed) {
+		parameters.end_speed = parameters.max_speed;
 	}
 
 	profile->position = 0;
 	profile->parameters.distance += profile == &forward_profile ? on_completion_error_forward : 0;
-	parameters->max_speed = profile->direction * fabsf(parameters->max_speed);
-	parameters->end_speed = profile->direction * fabsf(parameters->end_speed);
-	parameters->acceleration = fabsf(parameters->acceleration);
-	memcpy(&(profile->parameters), parameters, sizeof(param_t));
-	profile->inverse_acceleration = parameters->acceleration >= 1 ? (1.0f / parameters->acceleration) : 1.0;
+	parameters.max_speed = profile->direction * fabsf(parameters.max_speed);
+	parameters.end_speed = profile->direction * fabsf(parameters.end_speed);
+	parameters.acceleration = fabsf(parameters.acceleration);
+	memcpy(&(profile->parameters), &parameters, sizeof(param_t));
+	profile->inverse_acceleration = parameters.acceleration >= 1 ? (1.0f / parameters.acceleration) : 1.0;
 
 	profile->state = ACCELERATING;
 }
 
-void Profile_Container(param_t* parameters, profile_t* profile) {
+void Profile_Container(param_t parameters, profile_t* profile) {
 	float original_position = mouse_position;
 	Start_Profile(parameters, profile);
 	while (profile->state != COMPLETE);
 	float delta_position = mouse_position - original_position;
-	on_completion_error_forward = parameters->distance - delta_position;
+	on_completion_error_forward = parameters.distance - delta_position;
 }
 
-void Smooth_Turn_Container(param_t* fwd_parameters, param_t* rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
+void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
+	float original_angle = mouse_angle;
 	Start_Profile(fwd_parameters, fwd_profile);
 	Start_Profile(rot_parameters, rot_profile);
-	while (rot_profile->state != COMPLETE && fwd_profile->state != COMPLETE);
+	while (rot_profile->state != COMPLETE || fwd_profile->state != COMPLETE);
+	float delta_angle = mouse_angle - original_angle;
+	on_completion_error_rotational = rot_parameters.distance - delta_angle;
+	Clear_Profile(rot_profile);
+	fwd_parameters.distance = 20;
 	Profile_Container(fwd_parameters, fwd_profile);
 }
 

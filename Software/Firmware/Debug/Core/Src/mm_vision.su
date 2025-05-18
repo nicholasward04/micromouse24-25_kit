@@ -8,5 +8,5 @@
 ../Core/Src/mm_vision.c:141:6:Wall_Front	16	static
 ../Core/Src/mm_vision.c:156:6:Wall_Left	8	static
 ../Core/Src/mm_vision.c:169:6:Wall_Right	8	static
-../Core/Src/mm_vision.c:183:6:Calculate_Steering_Adjustment	32	static
-../Core/Src/mm_vision.c:193:6:Calculate_Error	24	static
+../Core/Src/mm_vision.c:183:6:Calculate_Steering_Adjustment	24	static
+../Core/Src/mm_vision.c:192:6:Calculate_Error	24	static
