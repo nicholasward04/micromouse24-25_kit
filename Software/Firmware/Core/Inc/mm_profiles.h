@@ -9,8 +9,6 @@
 
 #include "main.h"
 
-const float MOUSE_BACK_TO_CENTER_MM = 32.467;
-
 typedef struct {
 	float distance; 					// mm             degrees
 	float max_speed;					// mm/sec         degrees/sec
@@ -34,46 +32,6 @@ typedef struct {
 	float inverse_acceleration;
 	int direction; // 1: forward -1: reverse
 } profile_t;
-
-param_t SEARCH_BACK_TO_WALL_FWD = { .distance = 150 - MOUSE_BACK_TO_CENTER_MM,
-								    .max_speed = 500,
-								    .end_speed = 500,
-								    .acceleration = 2500 };
-
-param_t SEARCH_FWD = { .distance = 180,
-					   .max_speed = 500,
-					   .end_speed = 500,
-					   .acceleration = 2500 };
-
-param_t SEARCH_TURN_FWD = { .distance = 10,
-					   .max_speed = 500,
-					   .end_speed = 500,
-					   .acceleration = 2500 };
-
-param_t SEARCH_STOP_FWD = { .distance = 30,
-						    .max_speed = 500,
-						    .end_speed = 0,
-						    .acceleration = 2500 };
-
-param_t SEARCH_REVERSE_FWD = { .distance = -150,
-								.max_speed = 500,
-								.end_speed = 0,
-								.acceleration = 2500 };
-
-param_t SEARCH_ROT_RIGHT = { .distance = -90,
-							 .max_speed = 500,
-						     .end_speed = 500,
-							 .acceleration = 2500 };
-
-param_t SEARCH_ROT_LEFT = { .distance = 90,
-							.max_speed = 500,
-						    .end_speed = 500,
-							.acceleration = 2500 };
-
-param_t ROT_ABOUT = { .distance = 180,
-					  .max_speed = 500,
-					  .end_speed = 0,
-					  .acceleration = 2500 };
 
 void Clear_Profile(profile_t* profile);
 void Start_Profile(param_t parameters, profile_t* profile);

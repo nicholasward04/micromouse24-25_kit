@@ -95,7 +95,7 @@ int32_t objective_R = 0;
 struct Maze maze;
 uint8_t goal_swap = 0;
 
-mouse_mode_t mouse_mode = TEST;
+mouse_mode_t mouse_mode = SEARCHING;
 
 // Profiles
 profile_t forward_profile;
@@ -166,15 +166,20 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if (armed) {
+		  adjust_steering = true;
 		  switch (mouse_mode) {
 			  case TEST: // Mode for testing code without having to comment lines out
 				  break;
 			  case SEARCHING:
+				  adjust_steering = true;
 				  Search_Mode(&maze);
 				  break;
 			  case RACING:
 				  break;
 		  }
+	  }
+	  else {
+		  adjust_steering = false;
 	  }
   }
   /* USER CODE END 3 */

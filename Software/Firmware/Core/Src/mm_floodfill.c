@@ -9,6 +9,7 @@
 #include "mm_vision.h"
 #include "mm_supplemental.h"
 #include "mm_profiles.h"
+#include "mm_motors.h"
 
 extern mouse_state_t mouse_state;
 extern struct Maze maze;
@@ -20,7 +21,7 @@ extern bool armed;
 
 extern bool wall_front;
 
-const uint8_t MAX_COST = 255;
+const uint16_t MAX_COST = 256;
 char dir_chars[4] = {'n', 'e', 's', 'w'};
 enum DirectionBitmask mask_array[4] = {NORTH_MASK, EAST_MASK, SOUTH_MASK, WEST_MASK};
 
@@ -32,6 +33,49 @@ bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
     }
     return true;
 }
+
+const float MOUSE_BACK_TO_CENTER_MM = 32.467;
+const float BACK_TO_WALL_DIST = 165 - MOUSE_BACK_TO_CENTER_MM;
+
+param_t SEARCH_BACK_TO_WALL_FWD = { .distance = BACK_TO_WALL_DIST,
+								    .max_speed = 500,
+								    .end_speed = 500,
+								    .acceleration = 2500 };
+
+param_t SEARCH_FWD = { .distance = 165,
+					   .max_speed = 500,
+					   .end_speed = 500,
+					   .acceleration = 2500 };
+
+param_t SEARCH_TURN_FWD = { .distance = 30,
+					   .max_speed = 500,
+					   .end_speed = 0,
+					   .acceleration = 2500 };
+
+param_t SEARCH_STOP_FWD = { .distance = 60,
+						    .max_speed = 500,
+						    .end_speed = 0,
+						    .acceleration = 2500 };
+
+param_t SEARCH_REVERSE_FWD = { .distance = -120,
+								.max_speed = 250,
+								.end_speed = 0,
+								.acceleration = 2500 };
+
+param_t SEARCH_ROT_LEFT = { .distance = -90,
+							 .max_speed = 500,
+						     .end_speed = 0,
+							 .acceleration = 2500 };
+
+param_t SEARCH_ROT_RIGHT = { .distance = 90,
+							.max_speed = 500,
+						    .end_speed = 0,
+							.acceleration = 2500 };
+
+param_t ROT_ABOUT = { .distance = 180,
+					  .max_speed = 500,
+					  .end_speed = 0,
+					  .acceleration = 2500 };
 
 struct CellList* Get_Neighbor_Cells(struct Maze* maze, struct Coord* pos) {
 	struct CellList* cell_list = (struct CellList*)malloc(sizeof(struct CellList));
@@ -155,7 +199,7 @@ void Floodfill(struct Maze* maze) {
     if (maze->goalPos[0].x == 0) { goal_count = 1; }                                                    // Check if goal is maze center or start cell
 
     struct Coord queue[MAX_COST];                                                                       // Initialize queue
-    uint8_t head = 0, tail = 0;
+    uint16_t head = 0, tail = 0;
     for (uint8_t cell = 0; cell < goal_count; cell++) {
         maze->distances[maze->goalPos[cell].y][maze->goalPos[cell].x] = 0;                              // Set goal cells to cost/distance minimum = 0
         queue[tail] = maze->goalPos[cell]; tail++;                                                      // Add goal cells to queue, increment tail
@@ -225,7 +269,11 @@ void Search_Mode(struct Maze* maze) {
 		if (wall_front) { // Back up into wall to realign, continue from there
 				Profile_Container(SEARCH_STOP_FWD, &forward_profile);
 				Profile_Container(ROT_ABOUT, &rotational_profile);
+				Clear_Profile(&rotational_profile);
 				Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
+				forward_profile.direction *= -1;
+				forward_profile.position = 0;
+				HAL_Delay(500);
 				maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
 				prev_action = ABOUT_FACE;
 			}
