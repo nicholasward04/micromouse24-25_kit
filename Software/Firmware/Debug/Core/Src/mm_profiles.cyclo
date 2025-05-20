@@ -1,6 +1,7 @@
 ../Core/Src/mm_profiles.c:22:6:Clear_Profile	1
 ../Core/Src/mm_profiles.c:28:6:Start_Profile	6
 ../Core/Src/mm_profiles.c:52:6:Profile_Container	2
-../Core/Src/mm_profiles.c:60:6:Smooth_Turn_Container	3
-../Core/Src/mm_profiles.c:70:7:Calculate_Braking_Distance	1
-../Core/Src/mm_profiles.c:74:6:Update_Profile	11
+../Core/Src/mm_profiles.c:60:6:Turn_Container	2
+../Core/Src/mm_profiles.c:71:6:Smooth_Turn_Container	3
+../Core/Src/mm_profiles.c:81:7:Calculate_Braking_Distance	1
+../Core/Src/mm_profiles.c:85:6:Update_Profile	11

@@ -36,6 +36,7 @@ typedef struct {
 void Clear_Profile(profile_t* profile);
 void Start_Profile(param_t parameters, profile_t* profile);
 void Profile_Container(param_t parameters, profile_t* profile);
+void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile);
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile);
 float Calculate_Braking_Distance(float current_speed, float end_speed, float inverse_acceleration);
 void Update_Profile(profile_t* profile);

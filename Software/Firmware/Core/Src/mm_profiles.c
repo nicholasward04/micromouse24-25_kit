@@ -57,14 +57,25 @@ void Profile_Container(param_t parameters, profile_t* profile) {
 	on_completion_error_forward = parameters.distance - delta_position;
 }
 
+void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
+    Profile_Container(fwd_parameters, fwd_profile);
+    adjust_steering = false;
+    Start_Profile(rot_parameters, rot_profile);
+    while(rot_profile->state != COMPLETE);
+    Clear_Profile(rot_profile);
+    adjust_steering = true;
+    fwd_parameters.end_speed = fwd_parameters.max_speed;
+    Profile_Container(fwd_parameters, fwd_profile);
+}
+
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
 	adjust_steering = false;
 	Start_Profile(fwd_parameters, fwd_profile);
 	Start_Profile(rot_parameters, rot_profile);
-	while (rot_profile->state != COMPLETE);
+	while (rot_profile->state != COMPLETE || fwd_profile->state != COMPLETE);
 	Clear_Profile(rot_profile);
 	adjust_steering = true;
-	while (fwd_profile->state != COMPLETE);
+	Profile_Container(fwd_parameters, fwd_profile);
 }
 
 float Calculate_Braking_Distance(float current_speed, float end_speed, float inverse_acceleration) {

@@ -35,19 +35,19 @@ bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
 }
 
 const float MOUSE_BACK_TO_CENTER_MM = 32.467;
-const float BACK_TO_WALL_DIST = 165 - MOUSE_BACK_TO_CENTER_MM;
+const float BACK_TO_WALL_DIST = 180 - MOUSE_BACK_TO_CENTER_MM;
 
 param_t SEARCH_BACK_TO_WALL_FWD = { .distance = BACK_TO_WALL_DIST,
 								    .max_speed = 500,
-								    .end_speed = 500,
+								    .end_speed = 0,
 								    .acceleration = 2500 };
 
-param_t SEARCH_FWD = { .distance = 165,
+param_t SEARCH_FWD = { .distance = 180,
 					   .max_speed = 500,
-					   .end_speed = 500,
+					   .end_speed = 0,
 					   .acceleration = 2500 };
 
-param_t SEARCH_TURN_FWD = { .distance = 30,
+param_t SEARCH_TURN_FWD = { .distance = 80,
 					   .max_speed = 500,
 					   .end_speed = 0,
 					   .acceleration = 2500 };
@@ -132,7 +132,7 @@ uint8_t Scan_Walls(struct Maze* maze) { // Checks wall information based on mous
                 if (Off_Maze(cur_pos.x - 1, cur_pos.y)) { maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x - 1] |= EAST_MASK; }  break;
         }
     }
-    if (Wall_Left()) {
+    if (Wall_Right()) {
         maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[(cur_dir + 3) % 4];
         walls_changed += 1;
         switch (cur_dir) {
@@ -146,7 +146,7 @@ uint8_t Scan_Walls(struct Maze* maze) { // Checks wall information based on mous
                 if (Off_Maze(cur_pos.x, cur_pos.y - 1)) { maze->cellWalls[maze->mouse_pos.y - 1][maze->mouse_pos.x] |= NORTH_MASK; } break;
         }
     }
-    if (Wall_Right()) {
+    if (Wall_Left()) {
         maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[(cur_dir + 1) % 4];
         walls_changed += 1;
         switch (cur_dir) {
@@ -255,14 +255,14 @@ void Search_Mode(struct Maze* maze) {
 
 	enum Direction best_dir = Best_Cell(maze, maze->mouse_pos);
 
-	if (best_dir == (enum Direction)((maze->mouse_dir + 1) % 4)) { // Right Turn
-			Smooth_Turn_Container(SEARCH_FWD, SEARCH_ROT_RIGHT, &forward_profile, &rotational_profile);
-			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 1) % 4);
+	if (best_dir == (enum Direction)((maze->mouse_dir + 3) % 4)) { // Right Turn
+			Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_RIGHT, &forward_profile, &rotational_profile);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 3) % 4);
 			prev_action = RIGHT_TURN;
 		}
-	else if (best_dir == (enum Direction)((maze->mouse_dir + 3) % 4)) { // Left Turn
-			Smooth_Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_LEFT, &forward_profile, &rotational_profile);
-			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 3) % 4);
+	else if (best_dir == (enum Direction)((maze->mouse_dir + 1) % 4)) { // Left Turn
+			Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_LEFT, &forward_profile, &rotational_profile);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 1) % 4);
 			prev_action = LEFT_TURN;
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 2) % 4)) { // About turn

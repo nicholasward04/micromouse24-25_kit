@@ -18,16 +18,16 @@ extern float SYSTICK_FREQUENCY;
 const uint8_t FRONT_WALL_LIMIT = 100; // If front wall too close, disable IR correction due to increase in reflection
 const float STEERING_ADJUSTMENT_LIMIT = 5.0f; // In degrees
 
-const float IR_KP = 0.002f;
+const float IR_KP = 0.003f;
 
 // Translation Values (determined before runtime)
-uint16_t translation_FL = 143;
-uint16_t translation_L = 787;
-uint16_t translation_R = 606;
-uint16_t translation_FR = 134;
+uint16_t translation_FL = 128;
+uint16_t translation_L = 763;
+uint16_t translation_R = 638;
+uint16_t translation_FR = 147;
 
 // Wall Thresholds
-uint16_t wall_front_thresh = 60;
+uint16_t wall_front_thresh = 40;
 uint16_t wall_left_thresh = 20;
 uint16_t wall_right_thresh = 20;
 
