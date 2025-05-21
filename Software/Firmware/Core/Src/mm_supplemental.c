@@ -65,7 +65,7 @@ double Read_Battery() {
 void ARM_Button() {
 	for (uint8_t i=0; i < 5; i++) {
 		LED_Red_Toggle();
-		HAL_Delay(1000);
+		HAL_Delay(500);
 	}
 	armed = true;
 }

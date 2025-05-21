@@ -22,7 +22,7 @@ const float RADIANS_PER_DEGREE = 2 * M_PI / 360.0;
 
 const float MAX_MOTOR_VOLTAGE = 6.0;
 const uint16_t MAX_PWM = 2047;
-const uint16_t PWM_LIMIT = 0.7 * MAX_PWM;
+const uint16_t PWM_LIMIT = 0.72 * MAX_PWM;
 
 const float SYSTICK_FREQUENCY = 500.0;
 const float SYSTICK_INTERVAL = (1.0 / SYSTICK_FREQUENCY);
@@ -44,8 +44,8 @@ const float FWD_KD = SYSTICK_FREQUENCY * (8 * FWD_TM - FWD_TD) / (FWD_KM * FWD_T
 
 const float ROT_ZETA = 0.707;
 const float ROT_TD = ROT_TM;
-const float ROT_KP = 8 * ROT_TM / (ROT_KM * ROT_ZETA * ROT_ZETA * ROT_TD * ROT_TD); // 8  16
-const float ROT_KD = SYSTICK_FREQUENCY * (16 * ROT_TM - ROT_TD) / (ROT_KM * ROT_TD); // 16  8
+const float ROT_KP = 8 * ROT_TM / (ROT_KM * ROT_ZETA * ROT_ZETA * ROT_TD * ROT_TD); // 16
+const float ROT_KD = SYSTICK_FREQUENCY * (16 * ROT_TM - ROT_TD) / (ROT_KM * ROT_TD); // 8
 
 float forward_error = 0;
 float previous_forward_error = 0;
@@ -164,7 +164,7 @@ void Update_Motors(float velocity, float omega, float steering_adjustment) {
 	steering_adjustment = rotational_profile.state == IDLE || rotational_profile.state == COMPLETE ? steering_adjustment : 0;
 
 	float position_output = Position_Controller(velocity);
-	float rotational_output = Rotational_Controller(steering_adjustment, omega);
+	float rotational_output = 0;//Rotational_Controller(steering_adjustment, omega);
 
 	float motor_left_voltage = 0;
 	float motor_right_voltage = 0;
@@ -175,8 +175,8 @@ void Update_Motors(float velocity, float omega, float steering_adjustment) {
 	float motor_left_speed = velocity - tangent_speed;
 	float motor_right_speed = velocity + tangent_speed;
 	#ifdef FEEDFORWARD_ENABLE
-		motor_left_voltage += 0.1*Feed_Forward(MOTOR_LEFT, motor_left_speed);
-		motor_right_voltage += 0.1*Feed_Forward(MOTOR_RIGHT, motor_right_speed);
+		motor_left_voltage += Feed_Forward(MOTOR_LEFT, motor_left_speed);
+		motor_right_voltage += Feed_Forward(MOTOR_RIGHT, motor_right_speed);
 	#endif
 	if (motor_controller_enabled) {
 		Set_Motor_Volts(MOTOR_LEFT, motor_left_voltage);

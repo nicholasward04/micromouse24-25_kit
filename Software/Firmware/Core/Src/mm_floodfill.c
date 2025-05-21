@@ -312,10 +312,13 @@ void Search_Mode(struct Maze* maze) {
 			maze->mouse_dir = NORTH;
 			// Reset mouse position to base position
 			// 180 then back up
-			// Set prev_action as BACKWARD
+			// Set prev_action as ABOUT_FACE
 			Profile_Container(SEARCH_STOP_FWD, &forward_profile);
 			Profile_Container(ROT_ABOUT, &rotational_profile);
+			Clear_Profile(&rotational_profile);
 			Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
+			forward_profile.direction *= -1;
+			forward_profile.position = 0;
 
 			maze->mouse_dir = NORTH;
 			prev_action = ABOUT_FACE;
