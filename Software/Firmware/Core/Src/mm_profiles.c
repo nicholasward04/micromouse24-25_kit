@@ -19,6 +19,10 @@ extern float mouse_angle;
 float on_completion_error_forward = 0;
 float on_completion_error_rotational = 0;
 
+extern uint16_t wall_front_thresh;
+extern uint16_t wall_left_thresh;
+extern uint16_t wall_right_thresh;
+
 void Clear_Profile(profile_t* profile) {
 	bzero(profile, sizeof(profile_t));
 	profile->state = IDLE; // Should be handled above, just make sure it's IDLE
@@ -60,16 +64,18 @@ void Profile_Container(param_t parameters, profile_t* profile) {
 void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
     Profile_Container(fwd_parameters, fwd_profile);
     adjust_steering = false;
-    Start_Profile(rot_parameters, rot_profile);
-    while(rot_profile->state != COMPLETE);
+    Clear_Profile(fwd_profile);
     Clear_Profile(rot_profile);
-    adjust_steering = true;
+    Profile_Container(rot_parameters, rot_profile);
+    Clear_Profile(rot_profile);
     fwd_parameters.end_speed = fwd_parameters.max_speed;
+    adjust_steering = true;
     Profile_Container(fwd_parameters, fwd_profile);
 }
 
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
 	adjust_steering = false;
+	Clear_Profile(rot_profile);
 	Start_Profile(fwd_parameters, fwd_profile);
 	Start_Profile(rot_parameters, rot_profile);
 	while (rot_profile->state != COMPLETE || fwd_profile->state != COMPLETE);
@@ -78,12 +84,44 @@ void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profi
 	Profile_Container(fwd_parameters, fwd_profile);
 }
 
+void About_Face_Container(param_t fwd_parameters, param_t rev_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile, bool wall_realignment) {
+	if (wall_realignment) { // Back up into existing wall
+		Profile_Container(fwd_parameters, fwd_profile);
+		adjust_steering = false;
+		Profile_Container(rot_parameters, rot_profile);
+		Clear_Profile(rot_profile);
+		Profile_Container(rev_parameters, fwd_profile);
+		fwd_profile->direction *= -1;
+		fwd_profile->position = 0;
+		HAL_Delay(500);
+		adjust_steering = true;
+	}
+	else { // Turn in place
+		adjust_steering = false;
+		Profile_Container(rot_parameters, rot_profile);
+		Clear_Profile(rot_profile);
+		HAL_Delay(500);
+		adjust_steering = true;
+	}
+}
+
+param_t Parameter_Packer(float distance, float max_speed, float end_speed, float acceleration) {
+	param_t return_parameters = {
+			.distance = distance,
+			.max_speed = max_speed,
+			.end_speed = end_speed,
+			.acceleration = acceleration
+	};
+
+	return return_parameters;
+}
+
 float Calculate_Braking_Distance(float current_speed, float end_speed, float inverse_acceleration) {
 	return fabsf(current_speed * current_speed - end_speed * end_speed) * 0.5 * inverse_acceleration;
 }
 
 void Update_Profile(profile_t* profile) {
-	if (profile->state == IDLE) {
+	if (profile->state == IDLE || profile->state == COMPLETE) {
 		return;
 	}
 

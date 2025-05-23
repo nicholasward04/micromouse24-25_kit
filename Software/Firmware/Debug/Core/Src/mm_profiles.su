@@ -1,7 +1,9 @@
-../Core/Src/mm_profiles.c:22:6:Clear_Profile	16	static
-../Core/Src/mm_profiles.c:28:6:Start_Profile	32	static
-../Core/Src/mm_profiles.c:52:6:Profile_Container	48	static
-../Core/Src/mm_profiles.c:60:6:Turn_Container	40	static
-../Core/Src/mm_profiles.c:71:6:Smooth_Turn_Container	40	static
-../Core/Src/mm_profiles.c:81:7:Calculate_Braking_Distance	32	static
-../Core/Src/mm_profiles.c:85:6:Update_Profile	40	static
+../Core/Src/mm_profiles.c:26:6:Clear_Profile	16	static
+../Core/Src/mm_profiles.c:32:6:Start_Profile	32	static
+../Core/Src/mm_profiles.c:56:6:Profile_Container	48	static
+../Core/Src/mm_profiles.c:64:6:Turn_Container	40	static
+../Core/Src/mm_profiles.c:76:6:Smooth_Turn_Container	40	static
+../Core/Src/mm_profiles.c:87:6:About_Face_Container	40	static
+../Core/Src/mm_profiles.c:108:9:Parameter_Packer	40	static
+../Core/Src/mm_profiles.c:119:7:Calculate_Braking_Distance	32	static
+../Core/Src/mm_profiles.c:123:6:Update_Profile	40	static

@@ -11,6 +11,8 @@
 #include "mm_profiles.h"
 #include "mm_motors.h"
 
+//#define SMOOTH_TURNS
+
 extern mouse_state_t mouse_state;
 extern struct Maze maze;
 
@@ -18,6 +20,8 @@ extern profile_t forward_profile;
 extern profile_t rotational_profile;
 
 extern bool armed;
+extern bool motor_controller_enabled;
+bool disable_adc = false;
 
 extern bool wall_front;
 
@@ -34,48 +38,32 @@ bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
     return true;
 }
 
-const float MOUSE_BACK_TO_CENTER_MM = 32.467;
-const float BACK_TO_WALL_DIST = 180 - MOUSE_BACK_TO_CENTER_MM;
+const float WALL_THICKNESS = 12;
+const float MOUSE_BACK_TO_CENTER_MM = 32.467; // Distance from back of mouse PCB to centerpoint of motors
 
-param_t SEARCH_BACK_TO_WALL_FWD = { .distance = BACK_TO_WALL_DIST,
-								    .max_speed = 500,
-								    .end_speed = 0,
-								    .acceleration = 2500 };
+const float CELL_TO_CELL_MM = 180;
+const float WALL_TO_WALL_MM = 168;
+const float BACK_ON_WALL_TO_CELL_MM = CELL_TO_CELL_MM - (WALL_THICKNESS / 2) - MOUSE_BACK_TO_CENTER_MM;
+const float CELL_TO_CENTER_MM = (WALL_TO_WALL_MM / 2) + (WALL_THICKNESS / 2);
+const float CENTER_TO_WALL_REVERSE_MM = -1 * ((WALL_TO_WALL_MM / 2) + WALL_THICKNESS); // Include some extra distance to guarantee pushed against wall
+const float SMOOTH_TURN_RADIUS_MM = WALL_TO_WALL_MM / 2; // May need to decrease for sharper turn
+const float SMOOTH_TURN_FWD_MM = M_PI * SMOOTH_TURN_RADIUS_MM / 2;
 
-param_t SEARCH_FWD = { .distance = 180,
-					   .max_speed = 500,
-					   .end_speed = 0,
-					   .acceleration = 2500 };
+const float LEFT_TURN_DEG = -90;
+const float RIGHT_TURN_DEG = 90;
+const float ABOUT_TURN_DEG = -180;
 
-param_t SEARCH_TURN_FWD = { .distance = 80,
-					   .max_speed = 500,
-					   .end_speed = 0,
-					   .acceleration = 2500 };
+const float SEARCH_SPEED_FWD_MAX = 500;
+const float SEARCH_SPEED_ROT_MAX = 500;
+const float SEARCH_ACCELERATION = 3000;
 
-param_t SEARCH_STOP_FWD = { .distance = 60,
-						    .max_speed = 500,
-						    .end_speed = 0,
-						    .acceleration = 2500 };
+const float RACE_SPEED_FWD_MAX = 1000;
+const float RACE_SPEED_ROT_MAX = 750;
+const float RACE_ACCELERATION = 3000;
 
-param_t SEARCH_REVERSE_FWD = { .distance = -120,
-								.max_speed = 250,
-								.end_speed = 0,
-								.acceleration = 2500 };
-
-param_t SEARCH_ROT_LEFT = { .distance = -90,
-							 .max_speed = 500,
-						     .end_speed = 0,
-							 .acceleration = 2500 };
-
-param_t SEARCH_ROT_RIGHT = { .distance = 90,
-							.max_speed = 500,
-						    .end_speed = 0,
-							.acceleration = 2500 };
-
-param_t ROT_ABOUT = { .distance = 180,
-					  .max_speed = 500,
-					  .end_speed = 0,
-					  .acceleration = 2500 };
+param_t fwd_placeholder_1 = { 0 };
+param_t fwd_placeholder_2 = { 0 };
+param_t rot_placeholder_1 = { 0 };
 
 struct CellList* Get_Neighbor_Cells(struct Maze* maze, struct Coord* pos) {
 	struct CellList* cell_list = (struct CellList*)malloc(sizeof(struct CellList));
@@ -118,6 +106,7 @@ uint8_t Scan_Walls(struct Maze* maze) { // Checks wall information based on mous
     struct Coord cur_pos = maze->mouse_pos;
     uint8_t walls_changed = 0;
 
+    Poll_Sensors(&mouse_state);
     if (Wall_Front()) {
         maze->cellWalls[cur_pos.y][cur_pos.x] |= mask_array[cur_dir];
         walls_changed += 1;
@@ -244,51 +233,67 @@ enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos) {
 }
 
 void Maze_Init(struct Maze* maze) {
-    for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0; } }            // Initialize all wall values to 0
+    for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0;
+    																	  maze->exploredCells[y][x] = 0; } }        // Initialize all wall/explored values to 0
     maze->mouse_dir = NORTH;                                                                                        // Mouse starting direction/pos always NORTH/{0,0}
     maze->mouse_pos = (struct Coord){0,0};
 }
 
 void Search_Mode(struct Maze* maze) {
+	disable_adc = true;
 	Scan_Walls(maze);
+	disable_adc = false;
 	Floodfill(maze);
 
 	enum Direction best_dir = Best_Cell(maze, maze->mouse_pos);
 
 	if (best_dir == (enum Direction)((maze->mouse_dir + 3) % 4)) { // Right Turn
-			Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_RIGHT, &forward_profile, &rotational_profile);
+		rot_placeholder_1 = Parameter_Packer(RIGHT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
+		#ifndef SMOOTH_TURNS
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
+		#else
+			fwd_placeholder_1 = Parameter_Packer(SMOOTH_TURN_FWD_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			Smooth_Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
+		#endif
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 3) % 4);
 			prev_action = RIGHT_TURN;
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 1) % 4)) { // Left Turn
-			Turn_Container(SEARCH_TURN_FWD, SEARCH_ROT_LEFT, &forward_profile, &rotational_profile);
+		rot_placeholder_1 = Parameter_Packer(LEFT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
+		#ifndef SMOOTH_TURNS
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
+		#else
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			Smooth_Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
+		#endif
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 1) % 4);
 			prev_action = LEFT_TURN;
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 2) % 4)) { // About turn
+		rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
 		if (wall_front) { // Back up into wall to realign, continue from there
-				Profile_Container(SEARCH_STOP_FWD, &forward_profile);
-				Profile_Container(ROT_ABOUT, &rotational_profile);
-				Clear_Profile(&rotational_profile);
-				Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
-				forward_profile.direction *= -1;
-				forward_profile.position = 0;
-				HAL_Delay(500);
-				maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
-				prev_action = ABOUT_FACE;
-			}
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, true);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
+			prev_action = ABOUT_FACE;
+		}
 		else { // If no wall, simply turn 180 degrees
-				Profile_Container(ROT_ABOUT, &rotational_profile);
-				maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
-				prev_action = NONE;
-			}
+			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, false);
+			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
+			prev_action = NONE;
+		}
 	}
 
 	if (prev_action == FORWARD_DRIVE) { // Normal forward movement
-		Profile_Container(SEARCH_FWD, &forward_profile);
+		fwd_placeholder_1 = Parameter_Packer(CELL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+		Profile_Container(fwd_placeholder_1, &forward_profile);
 	}
 	else if (prev_action == ABOUT_FACE){ // Distance to travel is less than after a forward movement or turn
-		Profile_Container(SEARCH_BACK_TO_WALL_FWD, &forward_profile);
+		fwd_placeholder_1 = Parameter_Packer(BACK_ON_WALL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+		Profile_Container(fwd_placeholder_1, &forward_profile);
 	}
 	else { // On a turn don't make any additional movement
 
@@ -307,21 +312,18 @@ void Search_Mode(struct Maze* maze) {
 
 		}
 		else {
-			armed = false;
-			Set_Goal_Cell(maze, 4); // Change goal cell back to center of maze
-			maze->mouse_dir = NORTH;
-			// Reset mouse position to base position
-			// 180 then back up
-			// Set prev_action as ABOUT_FACE
-			Profile_Container(SEARCH_STOP_FWD, &forward_profile);
-			Profile_Container(ROT_ABOUT, &rotational_profile);
-			Clear_Profile(&rotational_profile);
-			Profile_Container(SEARCH_REVERSE_FWD, &forward_profile);
-			forward_profile.direction *= -1;
-			forward_profile.position = 0;
+			// Mouse has returned to start position, realign with wall and wait for user input
+			rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, true);
 
 			maze->mouse_dir = NORTH;
 			prev_action = ABOUT_FACE;
+			Set_Goal_Cell(maze, 4); // Change goal cell back to center of maze
+
+			armed = false;
+			motor_controller_enabled = false;
 		}
 	}
 

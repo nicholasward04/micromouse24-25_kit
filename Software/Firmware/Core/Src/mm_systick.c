@@ -27,6 +27,7 @@ extern profile_t forward_profile;
 extern profile_t rotational_profile;
 
 extern float steering_adjustment;
+extern bool disable_adc;
 
 uint32_t time_last_updated_ms = 0;
 
@@ -43,11 +44,13 @@ void Systick() {
 		Update_Profile(&forward_profile);
 		Update_Profile(&rotational_profile);
 		// Update IR sensor readings and check for walls
-		Poll_Sensors(&mouse_state);
+		if (!disable_adc) {
+			Poll_Sensors(&mouse_state);
 
-		Wall_Front();
-		Wall_Left();
-		Wall_Right();
+			Wall_Front();
+			Wall_Left();
+			Wall_Right();
+		}
 
 		Calculate_Error();
 		// Update battery voltage

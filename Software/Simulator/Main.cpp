@@ -36,10 +36,22 @@ struct CellList {
 struct Maze {
     Coord mouse_pos;
     Direction mouse_dir;
+    int explored[16][16];
     int distances[16][16];
     int cellWalls[16][16];
     Coord goalPos[4];
 };
+
+typedef enum {
+    FORWARD_ONE_CELL = 0,
+    TURN_RIGHT = 1,
+    TURN_LEFT = 2
+} motion_type_t;
+
+typedef enum {
+    SEARCH = 0,
+    RACE = 1
+} mode_type_t;
 
 const uint8_t MAX_COST = 255;
 char dir_chars[4] = {'n', 'e', 's', 'w'};
@@ -52,9 +64,12 @@ bool offMaze(int mouse_pos_x, int mouse_pos_y) {
     return true;
 }
 
-void updateSimulator(Maze maze) {                                     // Redraws the simulator based off of current distance and wall values
+void updateSimulator(Maze maze) {                                    // Redraws the simulator based off of current distance and wall values
     for (int y = 0; y < 16; y++) {
         for (int x = 0; x < 16; x++) {
+            if (maze.explored[y][x]) {
+                API::setColor(x, y, 'g');
+            }
             API::setText(x, y, std::to_string(maze.distances[y][x])); // Update simulator distances
 
             if (maze.cellWalls[y][x] & NORTH_MASK) {                  // Update simulator walls
@@ -159,12 +174,16 @@ uint8_t scanWalls(Maze* maze) { // Checks wall information based on mouse's curr
     return walls_changed;
 }
 
-void updateMousePos(Coord *pos, Direction dir)
+void updateMousePos(Coord *pos, Direction dir, Maze* maze)
 {
+    maze->explored[pos->y][pos->x] = 1;
+
     if      (dir == NORTH) { pos->y++; }
     else if (dir == SOUTH) { pos->y--; }
     else if (dir == WEST)  { pos->x--; }
     else if (dir == EAST)  { pos->x++; }
+
+    maze->explored[pos->y][pos->x] = 1;
 }
 
 void setGoalCell(Maze* maze, int num_of_goals) {
@@ -178,7 +197,7 @@ void setGoalCell(Maze* maze, int num_of_goals) {
     }
 }
 
-void floodfill(Maze* maze) {
+void floodfill(Maze* maze, mode_type_t mode) {
     for (uint8_t y=0; y<16; y++) { for (uint8_t x=0; x<16; x++) { maze->distances[y][x] = MAX_COST; } } // Initialize all maze costs/distances to the maximum = 255
 
     uint8_t goal_count = 4;
@@ -198,6 +217,23 @@ void floodfill(Maze* maze) {
         uint8_t new_distance = maze->distances[curr_pos.y][curr_pos.x] + 1;                             // Calculate cost for adjacent cells
 
         CellList* neighbors = getNeighborCells(maze, &curr_pos);
+        Cell* replacement_array = (Cell*)malloc(sizeof(Cell) * 4);
+
+        if (mode == RACE) {
+            std::cerr << "entered" << std::endl;
+            uint8_t replacement_index = 0;
+            uint8_t loop_size = neighbors->size;
+            for (uint8_t neighbor = 0; neighbor < loop_size; neighbor++) {
+                if (!maze->explored[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x]) {
+                    neighbors->size--;
+                }
+                else {
+                    replacement_array[replacement_index] = neighbors->cells[neighbor];
+                    replacement_index++;
+                }
+            }
+            memcpy(neighbors->cells, replacement_array, sizeof(replacement_array));
+        }
 
         for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {                            // For each neighbor cell, check if its cost/distance is > new distance -- if so, update its value
             if (maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] > new_distance) {
@@ -205,12 +241,29 @@ void floodfill(Maze* maze) {
                 queue[tail] = neighbors->cells[neighbor].pos; tail++;
             }
         }
-        free(neighbors->cells); free(neighbors);
+        free(neighbors->cells);
+        free(neighbors);
     }
 }
 
-Direction bestCell(Maze* maze, Coord mouse_pos) {
+Direction bestCell(Maze* maze, Coord mouse_pos, mode_type_t mode) {
     CellList* neighbors = getNeighborCells(maze, &mouse_pos);
+    Cell* replacement_array = (Cell*)malloc(sizeof(Cell) * 4);
+
+    if (mode == RACE) {
+        uint8_t replacement_index = 0;
+        uint8_t loop_size = neighbors->size;
+        for (uint8_t neighbor = 0; neighbor < loop_size; neighbor++) {
+            if (!maze->explored[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x]) {
+                neighbors->size--;
+            }
+            else {
+                replacement_array[replacement_index] = neighbors->cells[neighbor];
+                replacement_index++;
+            }
+        }
+        memcpy(neighbors->cells, replacement_array, sizeof(replacement_array));
+    }
 
     uint8_t best_cell_index = 0;
     uint8_t lowest_cost = maze->distances[mouse_pos.y][mouse_pos.x];
@@ -224,29 +277,101 @@ Direction bestCell(Maze* maze, Coord mouse_pos) {
            }
     }
     Direction ret_dir = neighbors->cells[best_cell_index].dir;
-    free(neighbors->cells); free(neighbors);
+    free(neighbors->cells);
+    free(neighbors);
 
     return ret_dir;                                                                                                 // Return direction of lowest cost cell
 }
 
 void mazeInit(Maze* maze) {
-    for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0; } }            // Initialize all wall values to 0
+    for (uint8_t y = 0; y < 16; y++) { for (uint8_t x = 0; x < 16; x++) { maze->cellWalls[y][x] = 0;
+                                                                          maze->explored[y][x] = 0; } }             // Initialize all wall/explored values to 0
     maze->mouse_dir = NORTH;                                                                                        // Mouse starting direction/pos always NORTH/{0,0}
     maze->mouse_pos = {0,0};
+}
+
+void raceMode(Maze maze) {
+    // Make copy of maze and run floodfill on only explored cells
+    // Plan motion by running best cell until reaching center of maze (don't actually move mouse)
+    // Store desired movements into a queue
+    // After center is reached, reset mouse position/direction in the maze
+    // Combine movements into larger profiles (eg. 1 cell forward + 1 cell forward = 2 cells forward) - not possible for sim
+    // Store combined profiles into a queue
+    // Until the queue is empty, execute the motion at the front of queue
+    // Once reached center, don't return to start
+
+    floodfill(&maze, RACE);
+    updateSimulator(maze);    
+
+    std::cerr << "Completed race floodfill" << std::endl;
+
+    uint16_t prelim_motions_length = 0;
+    motion_type_t prelim_motion_queue[256];
+    
+    setGoalCell(&maze, 4);                                                                                        
+    while (true) {
+        Direction best_dir = bestCell(&maze, maze.mouse_pos, RACE);                                                      
+
+        if (best_dir == (Direction)((maze.mouse_dir + 1) % 4)) {       // Right turn
+            prelim_motion_queue[prelim_motions_length] = TURN_RIGHT;
+            maze.mouse_dir = (Direction)((maze.mouse_dir + 1) % 4);
+        }
+        else if (best_dir == (Direction)((maze.mouse_dir + 3) % 4)) {  // Left turn
+            prelim_motion_queue[prelim_motions_length] = TURN_LEFT;
+            maze.mouse_dir = (Direction)((maze.mouse_dir + 3) % 4);
+        }
+        else {
+            prelim_motion_queue[prelim_motions_length] = FORWARD_ONE_CELL;
+        }
+
+        prelim_motions_length++;
+        updateMousePos(&maze.mouse_pos, maze.mouse_dir, &maze);
+
+        if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {    // Check if mouse has reached the goal position, if so break
+            break;
+        }
+    }
+
+    std::cerr << "Completed motion planning" << std::endl;
+
+    for (uint16_t curr_motion = 0; curr_motion < prelim_motions_length; curr_motion++) {
+        std::cerr << prelim_motion_queue[curr_motion] << std::endl;
+        switch (prelim_motion_queue[curr_motion]) {
+            case FORWARD_ONE_CELL:
+                std::cerr << "Making movement: FORWARD" << std::endl;
+                API::moveForward();
+                break;
+            case TURN_RIGHT:
+            std::cerr << "Making movement: RIGHT" << std::endl;
+                API::turnRight();
+                break;
+            case TURN_LEFT:
+            std::cerr << "Making movement: LEFT" << std::endl;
+                API::turnLeft();
+                break;
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
     Maze maze;
     mazeInit(&maze);                                                                                                // Intialize maze
     uint8_t goal_swap = 0;
+    uint8_t run_count = 0;
 
     setGoalCell(&maze, 4);                                                                                          // Set initial goal cells -- center 4 cells
     while (true) {
         uint8_t walls_changed = scanWalls(&maze);                                                                   // Update wall information
-        if ((walls_changed > 0) || goal_swap) { floodfill(&maze); goal_swap = 0; }                                  // Update distance information if walls or goal have been updated
+        if ((walls_changed > 0) || goal_swap) { floodfill(&maze, SEARCH); goal_swap = 0; }                          // Update distance information if walls or goal have been updated
         updateSimulator(maze);
 
-        Direction best_dir = bestCell(&maze, maze.mouse_pos);                                                       // Get best direction to move to
+        if (run_count >= 2) {
+            std::cerr << "Switching to race mode" << std::endl;
+            updateSimulator(maze);
+            break;
+        }
+
+        Direction best_dir = bestCell(&maze, maze.mouse_pos, SEARCH);                                               // Get best direction to move to
 
         if (best_dir == (Direction)((maze.mouse_dir + 1) % 4)) {                                                    // Right turn
             API::turnRight();
@@ -263,11 +388,18 @@ int main(int argc, char* argv[]) {
         }
 
         API::moveForward();
-        updateMousePos(&maze.mouse_pos, maze.mouse_dir);
+        updateMousePos(&maze.mouse_pos, maze.mouse_dir, &maze);
 
         if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {                                              // Check if mouse has reached the goal position
-            if (maze.goalPos[0].x == 0) { setGoalCell(&maze, 4); }                                                  // Mouse has reached {0,0} goal position
+            if (maze.goalPos[0].x == 0) { 
+                setGoalCell(&maze, 4);                                                                              // Mouse has reached {0,0} goal position
+                run_count++; 
+                API::turnLeft();
+                API::turnLeft();
+                maze.mouse_dir = (Direction)((maze.mouse_dir + 2) % 4);
+            }                                 
             else { setGoalCell(&maze, 1); goal_swap = 1;}                                                           // Mouse has reached center of maze goal position
         }
     }
+    raceMode(maze);
 }

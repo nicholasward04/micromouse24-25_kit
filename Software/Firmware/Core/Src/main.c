@@ -101,6 +101,8 @@ mouse_mode_t mouse_mode = SEARCHING;
 profile_t forward_profile;
 profile_t rotational_profile;
 
+extern bool motor_controller_enabled;
+
 /* USER CODE END 0 */
 
 /**
@@ -166,20 +168,17 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  if (armed) {
+		  motor_controller_enabled = true;
 		  adjust_steering = true;
 		  switch (mouse_mode) {
 			  case TEST: // Mode for testing code without having to comment lines out
 				  break;
 			  case SEARCHING:
-				  adjust_steering = true;
 				  Search_Mode(&maze);
 				  break;
 			  case RACING:
 				  break;
 		  }
-	  }
-	  else {
-		  adjust_steering = false;
 	  }
   }
   /* USER CODE END 3 */
@@ -526,8 +525,8 @@ static void MX_USART1_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -595,8 +594,8 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 15, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
