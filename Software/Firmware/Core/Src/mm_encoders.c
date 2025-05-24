@@ -14,8 +14,8 @@ extern int32_t objective_R;
 
 const float GEAR_RATIO = 29.86f;
 const float ENCODER_TICKS_PER_ROTATION = 12.0f;
-const float WHEEL_DIAMETER = 29.03;
-const float MOUSE_RADIUS = 39.23; // Distance from center point of motors to center point of wheels
+const float WHEEL_DIAMETER = 28.32;
+const float MOUSE_RADIUS = 39.08; // Distance from center point of motors to center point of wheels
 const float ROTATION_BIAS = -0.05; // Start with 0, manual correction for inconsistent wheel diameters
 
 const float TICKS_PER_ROTATION = ENCODER_TICKS_PER_ROTATION * GEAR_RATIO;

@@ -16,7 +16,7 @@ typedef enum {
 typedef enum {
 	FORWARD = 0,
 	REVERSE = 1,
-	BREAK = 2
+	BRAKE = 2
 } motor_direction_t;
 
 void Set_Motor_Volts(motor_t motor, float voltage_to_translate);
@@ -26,5 +26,6 @@ float Positional_Controller(float velocity);
 float Rotational_Controller(float steering_adjustment, float omega);
 float Feed_Forward(motor_t motor, float motor_speed);
 void Update_Motors(float velocity, float omega, float steering_adjustment);
+void Complete_Stop();
 
 #endif /* INC_MM_MOTORS_H_ */

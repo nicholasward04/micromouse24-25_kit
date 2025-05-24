@@ -102,6 +102,9 @@ profile_t forward_profile;
 profile_t rotational_profile;
 
 extern bool motor_controller_enabled;
+extern param_t fwd_placeholder_1;
+extern param_t fwd_placeholder_2;
+extern param_t rot_placeholder_1;
 
 /* USER CODE END 0 */
 
@@ -172,11 +175,15 @@ int main(void)
 		  adjust_steering = true;
 		  switch (mouse_mode) {
 			  case TEST: // Mode for testing code without having to comment lines out
+				  // Make change to maze
+				  Save_Maze_To_Flash(&maze);
+				  // Turn off mouse and remove code, click button to load maze and verify is the same
 				  break;
 			  case SEARCHING:
 				  Search_Mode(&maze);
 				  break;
 			  case RACING:
+				  Race_Mode(maze);
 				  break;
 		  }
 	  }

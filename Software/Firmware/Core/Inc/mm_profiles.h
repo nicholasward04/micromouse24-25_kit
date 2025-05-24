@@ -14,6 +14,7 @@ typedef struct {
 	float max_speed;					// mm/sec         degrees/sec
 	float end_speed;					// mm/sec         degrees/sec
 	float acceleration;					// mm/(sec^2)     degrees/(sec^2)
+	bool forward;                       // If true, parameters are for a forward movement (hack for race mode to identify parameters)
 } param_t;
 
 typedef enum {
@@ -41,6 +42,6 @@ void About_Face_Container(param_t fwd_parameters, param_t rev_parameters, param_
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile);
 float Calculate_Braking_Distance(float current_speed, float end_speed, float inverse_acceleration);
 void Update_Profile(profile_t* profile);
-param_t Parameter_Packer(float distance, float max_speed, float end_speed, float acceleration);
+param_t Parameter_Packer(float distance, float max_speed, float end_speed, float acceleration, bool forward);
 
 #endif /* INC_MM_PROFILES_H_ */

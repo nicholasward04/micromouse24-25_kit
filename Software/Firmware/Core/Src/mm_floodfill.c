@@ -11,7 +11,7 @@
 #include "mm_profiles.h"
 #include "mm_motors.h"
 
-//#define SMOOTH_TURNS
+#define SMOOTH_TURNS
 
 extern mouse_state_t mouse_state;
 extern struct Maze maze;
@@ -41,24 +41,28 @@ bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
 const float WALL_THICKNESS = 12;
 const float MOUSE_BACK_TO_CENTER_MM = 32.467; // Distance from back of mouse PCB to centerpoint of motors
 
-const float CELL_TO_CELL_MM = 180;
-const float WALL_TO_WALL_MM = 168;
+const float CELL_TO_CELL_MM = 180 - 7;
+const float WALL_TO_WALL_MM = 168 - 7;
 const float BACK_ON_WALL_TO_CELL_MM = CELL_TO_CELL_MM - (WALL_THICKNESS / 2) - MOUSE_BACK_TO_CENTER_MM;
-const float CELL_TO_CENTER_MM = (WALL_TO_WALL_MM / 2) + (WALL_THICKNESS / 2);
+const float CELL_TO_CENTER_MM = (WALL_TO_WALL_MM / 2) - (WALL_THICKNESS / 2);
 const float CENTER_TO_WALL_REVERSE_MM = -1 * ((WALL_TO_WALL_MM / 2) + WALL_THICKNESS); // Include some extra distance to guarantee pushed against wall
 const float SMOOTH_TURN_RADIUS_MM = WALL_TO_WALL_MM / 2; // May need to decrease for sharper turn
-const float SMOOTH_TURN_FWD_MM = M_PI * SMOOTH_TURN_RADIUS_MM / 2;
+const float SMOOTH_TURN_FWD_MM = M_PI * SMOOTH_TURN_RADIUS_MM / 6;  // div by 2
 
-const float LEFT_TURN_DEG = -90;
-const float RIGHT_TURN_DEG = 90;
-const float ABOUT_TURN_DEG = -180;
+const float LEFT_TURN_DEG = -94;
+const float RIGHT_TURN_DEG = 96;
+const float ABOUT_TURN_DEG = 190;
 
 const float SEARCH_SPEED_FWD_MAX = 500;
 const float SEARCH_SPEED_ROT_MAX = 500;
+const float SEARCH_SPEED_ROT_SMOOTH_MAX = 350;
+const float SEARCH_SPEED_FWD_SMOOTH_MAX = 350;
 const float SEARCH_ACCELERATION = 3000;
 
 const float RACE_SPEED_FWD_MAX = 1000;
 const float RACE_SPEED_ROT_MAX = 750;
+const float RACE_SPEED_ROT_SMOOTH_MAX = 350;
+const float RACE_SPEED_FWD_SMOOTH_MAX = 350;
 const float RACE_ACCELERATION = 3000;
 
 param_t fwd_placeholder_1 = { 0 };
@@ -152,18 +156,18 @@ uint8_t Scan_Walls(struct Maze* maze) { // Checks wall information based on mous
     return walls_changed;
 }
 
-void Update_Mouse_Pos(struct Coord *pos, enum Direction dir)
+void Update_Mouse_Pos(struct Coord *pos, enum Direction dir, struct Maze* maze)
 {
-	maze.exploredCells[pos->y][pos->x] = true;
+	maze->exploredCells[pos->y][pos->x] = true;
 
     if      (dir == NORTH) { pos->y++; }
     else if (dir == SOUTH) { pos->y--; }
     else if (dir == WEST)  { pos->x--; }
     else if (dir == EAST)  { pos->x++; }
 
-    maze.exploredCells[pos->y][pos->x] = true;
+    maze->exploredCells[pos->y][pos->x] = true;
 
-    mouse_state.current_cell = maze.cellWalls[pos->y][pos->x];
+    mouse_state.current_cell = maze->cellWalls[pos->y][pos->x];
 	mouse_state.mouse_position[0] = (uint8_t)pos->x;
 	mouse_state.mouse_position[1] = (uint8_t)pos->y;
 	mouse_state.mouse_direction = dir;
@@ -181,7 +185,7 @@ void Set_Goal_Cell(struct Maze* maze, int num_of_goals) {
     }
 }
 
-void Floodfill(struct Maze* maze) {
+void Floodfill(struct Maze* maze, enum mode_type_t mode) {
     for (uint8_t y=0; y<16; y++) { for (uint8_t x=0; x<16; x++) { maze->distances[y][x] = MAX_COST; } } // Initialize all maze costs/distances to the maximum = 255
 
     uint8_t goal_count = 4;
@@ -201,6 +205,22 @@ void Floodfill(struct Maze* maze) {
         uint8_t new_distance = maze->distances[curr_pos.y][curr_pos.x] + 1;                             // Calculate cost for adjacent cells
 
         struct CellList* neighbors = Get_Neighbor_Cells(maze, &curr_pos);
+        struct Cell* replacement_array = (struct Cell*)malloc(sizeof(struct Cell) * 4);
+
+        if (mode == RACE) {
+            uint8_t replacement_index = 0;
+            uint8_t loop_size = neighbors->size;
+            for (uint8_t neighbor = 0; neighbor < loop_size; neighbor++) {
+                if (!maze->exploredCells[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x]) {
+                    neighbors->size--;
+                }
+                else {
+                    replacement_array[replacement_index] = neighbors->cells[neighbor];
+                    replacement_index++;
+                }
+            }
+            neighbors->cells = replacement_array;
+        }
 
         for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {                            // For each neighbor cell, check if its cost/distance is > new distance -- if so, update its value
             if (maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] > new_distance) {
@@ -208,12 +228,32 @@ void Floodfill(struct Maze* maze) {
                 queue[tail] = neighbors->cells[neighbor].pos; tail++;
             }
         }
-        free(neighbors->cells); free(neighbors);
+        free(replacement_array);
+        if (mode == SEARCH) {
+            free(neighbors->cells);
+        }
+        free(neighbors);
     }
 }
 
-enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos) {
+enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos, enum mode_type_t mode) {
 	struct CellList* neighbors = Get_Neighbor_Cells(maze, &mouse_pos);
+    struct Cell* replacement_array = (struct Cell*)malloc(sizeof(struct Cell) * 4);
+
+    if (mode == RACE) {
+        uint8_t replacement_index = 0;
+        uint8_t loop_size = neighbors->size;
+        for (uint8_t neighbor = 0; neighbor < loop_size; neighbor++) {
+            if (!maze->exploredCells[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x]) {
+                neighbors->size--;
+            }
+            else {
+                replacement_array[replacement_index] = neighbors->cells[neighbor];
+                replacement_index++;
+            }
+        }
+        neighbors->cells = replacement_array;
+    }
 
     uint8_t best_cell_index = 0;
     uint8_t lowest_cost = maze->distances[mouse_pos.y][mouse_pos.x];
@@ -227,7 +267,11 @@ enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos) {
            }
     }
     enum Direction ret_dir = neighbors->cells[best_cell_index].dir;
-    free(neighbors->cells); free(neighbors);
+    free(replacement_array);
+    if (mode == SEARCH) {
+        free(neighbors->cells);
+    }
+    free(neighbors);
 
     return ret_dir;                                                                                                 // Return direction of lowest cost cell
 }
@@ -243,39 +287,41 @@ void Search_Mode(struct Maze* maze) {
 	disable_adc = true;
 	Scan_Walls(maze);
 	disable_adc = false;
-	Floodfill(maze);
+	Floodfill(maze, SEARCHING);
 
-	enum Direction best_dir = Best_Cell(maze, maze->mouse_pos);
+	enum Direction best_dir = Best_Cell(maze, maze->mouse_pos, SEARCHING);
 
 	if (best_dir == (enum Direction)((maze->mouse_dir + 3) % 4)) { // Right Turn
-		rot_placeholder_1 = Parameter_Packer(RIGHT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
 		#ifndef SMOOTH_TURNS
-			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			rot_placeholder_1 = Parameter_Packer(RIGHT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION, false);
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
 		#else
-			fwd_placeholder_1 = Parameter_Packer(SMOOTH_TURN_FWD_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			rot_placeholder_1 = Parameter_Packer(RIGHT_TURN_DEG, SEARCH_SPEED_ROT_SMOOTH_MAX, 0, SEARCH_ACCELERATION, false);
+			fwd_placeholder_1 = Parameter_Packer(SMOOTH_TURN_FWD_MM, SEARCH_SPEED_FWD_SMOOTH_MAX, SEARCH_SPEED_FWD_SMOOTH_MAX, SEARCH_ACCELERATION, true);
 			Smooth_Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
 		#endif
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 3) % 4);
 			prev_action = RIGHT_TURN;
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 1) % 4)) { // Left Turn
-		rot_placeholder_1 = Parameter_Packer(LEFT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
 		#ifndef SMOOTH_TURNS
-			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			rot_placeholder_1 = Parameter_Packer(LEFT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION, false);
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
 		#else
-			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION);
+			rot_placeholder_1 = Parameter_Packer(LEFT_TURN_DEG, SEARCH_SPEED_ROT_SMOOTH_MAX, 0, SEARCH_ACCELERATION, false);
+			fwd_placeholder_1 = Parameter_Packer(SMOOTH_TURN_FWD_MM, SEARCH_SPEED_FWD_SMOOTH_MAX, SEARCH_SPEED_FWD_SMOOTH_MAX, SEARCH_ACCELERATION, true);
 			Smooth_Turn_Container(fwd_placeholder_1, rot_placeholder_1, &forward_profile, &rotational_profile);
 		#endif
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 1) % 4);
 			prev_action = LEFT_TURN;
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 2) % 4)) { // About turn
-		rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
+		rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION, false);
 		if (wall_front) { // Back up into wall to realign, continue from there
-			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
-			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
+			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, true);
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
 			prev_action = ABOUT_FACE;
@@ -288,11 +334,11 @@ void Search_Mode(struct Maze* maze) {
 	}
 
 	if (prev_action == FORWARD_DRIVE) { // Normal forward movement
-		fwd_placeholder_1 = Parameter_Packer(CELL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+		fwd_placeholder_1 = Parameter_Packer(CELL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION, true);
 		Profile_Container(fwd_placeholder_1, &forward_profile);
 	}
 	else if (prev_action == ABOUT_FACE){ // Distance to travel is less than after a forward movement or turn
-		fwd_placeholder_1 = Parameter_Packer(BACK_ON_WALL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+		fwd_placeholder_1 = Parameter_Packer(BACK_ON_WALL_TO_CELL_MM, SEARCH_SPEED_FWD_MAX, SEARCH_SPEED_FWD_MAX, SEARCH_ACCELERATION, true);
 		Profile_Container(fwd_placeholder_1, &forward_profile);
 	}
 	else { // On a turn don't make any additional movement
@@ -301,21 +347,21 @@ void Search_Mode(struct Maze* maze) {
 
 	prev_action = FORWARD_DRIVE;
 
-	Update_Mouse_Pos(&maze->mouse_pos, maze->mouse_dir);
+	Update_Mouse_Pos(&maze->mouse_pos, maze->mouse_dir, maze);
 
 	// Check if mouse is in goal, if so change goal back to start location
 	if (maze->distances[maze->mouse_pos.y][maze->mouse_pos.x] == 0) {
 		if (!((maze->goalPos[0].x == 0) && (maze->goalPos[0].y == 0))) {
 			Set_Goal_Cell(maze, 1); // Change goal cell back to origin
 
-			// TODO: INSERT SAVE MAZE TO FLASH MEMORY HERE
-
+			// Save maze to flash memory
+			Save_Maze_To_Flash(maze);
 		}
 		else {
 			// Mouse has returned to start position, realign with wall and wait for user input
-			rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION);
-			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
-			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION);
+			rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION, false);
+			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
+			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, true);
 
 			maze->mouse_dir = NORTH;
@@ -329,6 +375,129 @@ void Search_Mode(struct Maze* maze) {
 
 }
 
-void Race_Mode(struct Maze* maze) {
+void Race_Mode(struct Maze maze) {
+    Floodfill(&maze, RACE);
 
+    uint16_t prelim_motions_length = 0;
+    enum motion_type_t prelim_motion_queue[256];
+
+    Set_Goal_Cell(&maze, 4);
+    while (true) {
+        enum Direction best_dir = Best_Cell(&maze, maze.mouse_pos, RACE);
+
+        if (best_dir == (enum Direction)((maze.mouse_dir + 3) % 4)) {       // Right turn
+            prelim_motion_queue[prelim_motions_length] = TURN_RIGHT;
+            maze.mouse_dir = (enum Direction)((maze.mouse_dir + 3) % 4);
+        }
+        else if (best_dir == (enum Direction)((maze.mouse_dir + 1) % 4)) {  // Left turn
+            prelim_motion_queue[prelim_motions_length] = TURN_LEFT;
+            maze.mouse_dir = (enum Direction)((maze.mouse_dir + 1) % 4);
+        }
+        else {
+            prelim_motion_queue[prelim_motions_length] = FORWARD_ONE_CELL;
+        }
+
+        prelim_motions_length++;
+        Update_Mouse_Pos(&maze.mouse_pos, maze.mouse_dir, &maze);
+
+        if (maze.distances[maze.mouse_pos.y][maze.mouse_pos.x] == 0) {    // Check if mouse has reached the goal position, if so break
+            break;
+        }
+    }
+
+    uint16_t total_params = 0;
+	param_t param_list[512] = { 0 };
+	bool back_to_wall = true;
+    // Combine indivudal motions into larger profiles
+    for (uint16_t curr_motion = 0; curr_motion < prelim_motions_length; curr_motion++) {
+        switch (prelim_motion_queue[curr_motion]) {
+            case FORWARD_ONE_CELL:
+            	param_list[total_params].acceleration = RACE_ACCELERATION;
+				param_list[total_params].max_speed = RACE_SPEED_FWD_MAX;
+            	if (back_to_wall) { // For start cell in maze
+            		param_list[total_params].distance += BACK_ON_WALL_TO_CELL_MM;
+            		back_to_wall = false;
+            	}
+            	else {
+            		param_list[total_params].distance += CELL_TO_CELL_MM;
+            	}
+                break;
+            case TURN_RIGHT:
+				#ifndef SMOOTH_TURNS
+            		// No smooth turns
+					param_list[total_params].end_speed = 0;
+					param_list[total_params].distance += CELL_TO_CENTER_MM;
+
+					total_params++;
+
+					// Add rotational parameters for turn
+					param_list[total_params] = Parameter_Packer(RIGHT_TURN_DEG, RACE_SPEED_ROT_MAX, 0, RACE_ACCELERATION, false);
+					total_params++;
+
+					// Start new forward profile for intial movement
+					param_list[total_params].distance += CELL_TO_CENTER_MM;
+				#else
+            		// Smooth turns
+            		param_list[total_params].end_speed = RACE_SPEED_FWD_SMOOTH_MAX;
+
+            		total_params++;
+
+            		// Add rotational parameters then forward parameters for smooth turn
+            		param_list[total_params] = Parameter_Packer(RIGHT_TURN_DEG, RACE_SPEED_ROT_SMOOTH_MAX, 0, RACE_ACCELERATION, false);
+            		total_params++;
+            		param_list[total_params] = Parameter_Packer(SMOOTH_TURN_FWD_MM, RACE_SPEED_FWD_SMOOTH_MAX, RACE_SPEED_FWD_SMOOTH_MAX, RACE_ACCELERATION, false);
+            		total_params++;
+				#endif
+                break;
+            case TURN_LEFT:
+				#ifndef SMOOTH_TURNS
+            		// No smooth turns
+					param_list[total_params].end_speed = 0;
+					param_list[total_params].distance += CELL_TO_CENTER_MM;
+
+					total_params++;
+
+					// Add rotational parameters for turn
+					param_list[total_params] = Parameter_Packer(LEFT_TURN_DEG, RACE_SPEED_ROT_MAX, 0, RACE_ACCELERATION, false);
+					total_params++;
+
+					// Start new forward profile for intial movement
+					param_list[total_params].distance += CELL_TO_CENTER_MM;
+				#else
+            		// Smooth turns
+            		param_list[total_params].end_speed = RACE_SPEED_FWD_SMOOTH_MAX;
+
+            		total_params++;
+
+            		// Add rotational parameters then forward parameters for smooth turn
+            		param_list[total_params] = Parameter_Packer(LEFT_TURN_DEG, RACE_SPEED_ROT_SMOOTH_MAX, 0, RACE_ACCELERATION, false);
+            		total_params++;
+            		param_list[total_params] = Parameter_Packer(SMOOTH_TURN_FWD_MM, RACE_SPEED_FWD_SMOOTH_MAX, RACE_SPEED_FWD_SMOOTH_MAX, RACE_ACCELERATION, false);
+            		total_params++;
+				#endif
+                break;
+        }
+    }
+
+    // Execute motions according to parameter list
+    uint16_t param = 0;
+    while (param < (total_params + 1)) {
+    	if (param_list[param].forward) { // Forward
+    		Profile_Container(param_list[param], &forward_profile);
+    	}
+    	else { // Rotational
+			#ifndef SMOOTH_TURNS
+    			Profile_Container(param_list[param], &rotational_profile);
+			#else // Use 2 parameters from list on smooth turns
+    			Smooth_Turn_Container(param_list[param], param_list[param+1], &forward_profile, &rotational_profile);
+    			param++;
+			#endif
+    	}
+    	param++;
+    }
+
+    armed = false;
+    motor_controller_enabled = false;
+
+    Complete_Stop();
 }

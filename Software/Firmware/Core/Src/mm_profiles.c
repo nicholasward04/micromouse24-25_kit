@@ -12,6 +12,7 @@ extern profile_t forward_profile;
 extern profile_t rotational_profile;
 
 extern bool adjust_steering;
+extern float STEERING_ADJUSTMENT_LIMIT;
 
 extern float mouse_position;
 extern float mouse_angle;
@@ -64,6 +65,7 @@ void Profile_Container(param_t parameters, profile_t* profile) {
 void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
     Profile_Container(fwd_parameters, fwd_profile);
     adjust_steering = false;
+    STEERING_ADJUSTMENT_LIMIT = 0.1;
     Clear_Profile(fwd_profile);
     Clear_Profile(rot_profile);
     Profile_Container(rot_parameters, rot_profile);
@@ -71,16 +73,19 @@ void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* f
     fwd_parameters.end_speed = fwd_parameters.max_speed;
     adjust_steering = true;
     Profile_Container(fwd_parameters, fwd_profile);
+    STEERING_ADJUSTMENT_LIMIT = 0.5;
 }
 
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
 	adjust_steering = false;
+	rot_parameters.acceleration *= 2;
 	Clear_Profile(rot_profile);
 	Start_Profile(fwd_parameters, fwd_profile);
 	Start_Profile(rot_parameters, rot_profile);
-	while (rot_profile->state != COMPLETE || fwd_profile->state != COMPLETE);
+	while (rot_profile->state != COMPLETE);
 	Clear_Profile(rot_profile);
 	adjust_steering = true;
+	fwd_parameters.distance = 15;
 	Profile_Container(fwd_parameters, fwd_profile);
 }
 
@@ -105,12 +110,13 @@ void About_Face_Container(param_t fwd_parameters, param_t rev_parameters, param_
 	}
 }
 
-param_t Parameter_Packer(float distance, float max_speed, float end_speed, float acceleration) {
+param_t Parameter_Packer(float distance, float max_speed, float end_speed, float acceleration, bool forward) {
 	param_t return_parameters = {
 			.distance = distance,
 			.max_speed = max_speed,
 			.end_speed = end_speed,
-			.acceleration = acceleration
+			.acceleration = acceleration,
+			.forward = forward
 	};
 
 	return return_parameters;

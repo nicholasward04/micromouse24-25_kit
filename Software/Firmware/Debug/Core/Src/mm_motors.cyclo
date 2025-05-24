@@ -1,7 +1,8 @@
 ../Core/Src/mm_motors.c:60:6:Set_Motor_Volts	5
 ../Core/Src/mm_motors.c:76:6:Set_PWM	3
 ../Core/Src/mm_motors.c:89:6:Set_Direction	11
-../Core/Src/mm_motors.c:126:7:Position_Controller	1
-../Core/Src/mm_motors.c:135:7:Rotational_Controller	1
-../Core/Src/mm_motors.c:145:7:Feed_Forward	4
-../Core/Src/mm_motors.c:162:6:Update_Motors	4
+../Core/Src/mm_motors.c:126:6:Complete_Stop	1
+../Core/Src/mm_motors.c:134:7:Position_Controller	1
+../Core/Src/mm_motors.c:143:7:Rotational_Controller	1
+../Core/Src/mm_motors.c:153:7:Feed_Forward	4
+../Core/Src/mm_motors.c:170:6:Update_Motors	4

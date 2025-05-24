@@ -4,6 +4,7 @@
  */
 
 #include "main.h"
+#include "mm_floodfill.h"
 
 #ifndef INC_MM_SUPPLEMENTAL_H_
 #define INC_MM_SUPPLEMENTAL_H_
@@ -31,6 +32,9 @@ void LED_Blue_Toggle();
 
 float Calculate_Battery_Bias(float commanded_voltage);
 double Read_Battery();
+
+void Save_Maze_To_Flash(struct Maze* maze);
+void Load_Maze_From_Flash(struct Maze* maze);
 
 void ARM_Button();
 void RACE_Button();

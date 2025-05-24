@@ -27,7 +27,7 @@ const uint16_t PWM_LIMIT = 0.72 * MAX_PWM;
 const float SYSTICK_FREQUENCY = 500.0;
 const float SYSTICK_INTERVAL = (1.0 / SYSTICK_FREQUENCY);
 
-const float FWD_KM = 257.0; // slope mm/s/volt 257
+const float FWD_KM = 257.0; // slope mm/s/volt
 const float FWD_TM = 0.1; // time constant
 
 const float ROT_KM = FWD_KM * 1.3; // slope dg/s/volt 1.3
@@ -38,14 +38,14 @@ const float ACC_FF = FWD_TM / (2 * FWD_KM);    // fwd_tm / fwd_km
 const float BIAS_FF = 0.442;   // y intercept for (x) (y) -> (speed) (volt)
 
 const float FWD_ZETA = 0.707; // sqrt(1/2) smaller is more agressive, larger is slower
-const float FWD_TD = FWD_TM;   // fwd_tm
-const float FWD_KP = 4 * FWD_TM / (FWD_KM * FWD_ZETA * FWD_ZETA * FWD_TD * FWD_TD);
+const float FWD_TD = FWD_TM;  // fwd_tm
+const float FWD_KP = 16 * FWD_TM / (FWD_KM * FWD_ZETA * FWD_ZETA * FWD_TD * FWD_TD);
 const float FWD_KD = SYSTICK_FREQUENCY * (8 * FWD_TM - FWD_TD) / (FWD_KM * FWD_TD);
 
 const float ROT_ZETA = 0.707;
 const float ROT_TD = ROT_TM;
-const float ROT_KP = 8 * ROT_TM / (ROT_KM * ROT_ZETA * ROT_ZETA * ROT_TD * ROT_TD); // 16
-const float ROT_KD = SYSTICK_FREQUENCY * (4 * ROT_TM - ROT_TD) / (ROT_KM * ROT_TD); // 8
+const float ROT_KP = 16 * ROT_TM / (ROT_KM * ROT_ZETA * ROT_ZETA * ROT_TD * ROT_TD); // 16
+const float ROT_KD = SYSTICK_FREQUENCY * (8 * ROT_TM - ROT_TD) / (ROT_KM * ROT_TD); // 8
 
 float forward_error = 0;
 float previous_forward_error = 0;
@@ -98,7 +98,7 @@ void Set_Direction(motor_t motor, motor_direction_t direction) {
 					HAL_GPIO_WritePin(ML_FWD_GPIO_Port,  ML_FWD_Pin, 0);
 					HAL_GPIO_WritePin(ML_BWD_GPIO_Port, ML_BWD_Pin, 1);
 					break;
-				case BREAK:
+				case BRAKE:
 					HAL_GPIO_WritePin(ML_FWD_GPIO_Port,  ML_FWD_Pin, 0);
 					HAL_GPIO_WritePin(ML_BWD_GPIO_Port, ML_BWD_Pin, 0);
 					break;
@@ -114,13 +114,21 @@ void Set_Direction(motor_t motor, motor_direction_t direction) {
 					HAL_GPIO_WritePin(MR_FWD_GPIO_Port,  MR_FWD_Pin, 0);
 					HAL_GPIO_WritePin(MR_BWD_GPIO_Port, MR_BWD_Pin, 1);
 					break;
-				case BREAK:
+				case BRAKE:
 					HAL_GPIO_WritePin(MR_FWD_GPIO_Port,  MR_FWD_Pin, 0);
 					HAL_GPIO_WritePin(MR_BWD_GPIO_Port, MR_BWD_Pin, 0);
 					break;
 			}
 			break;
 	}
+}
+
+void Complete_Stop() {
+	Set_Direction(MOTOR_LEFT, BRAKE);
+	Set_Direction(MOTOR_RIGHT, BRAKE);
+
+	Set_PWM(MOTOR_LEFT, 0);
+	Set_PWM(MOTOR_RIGHT, 0);
 }
 
 float Position_Controller(float velocity) {

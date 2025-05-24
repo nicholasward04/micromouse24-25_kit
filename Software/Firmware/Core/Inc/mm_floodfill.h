@@ -47,16 +47,27 @@ struct Maze {
     struct Coord goalPos[4];
 };
 
+enum motion_type_t{
+    FORWARD_ONE_CELL = 0,
+    TURN_RIGHT = 1,
+    TURN_LEFT = 2
+};
+
+enum mode_type_t{
+    SEARCH = 0,
+    RACE = 1
+};
+
 bool Off_Maze(int mouse_pos_x, int mouse_pos_y);
 struct CellList* Set_Neighbor_Cells(struct Maze* maze, struct Coord* pos);
 uint8_t Scan_Walls(struct Maze* maze);
-void Update_Mouse_Pos(struct Coord *pos, enum Direction dir);
+void Update_Mouse_Pos(struct Coord *pos, enum Direction dir, struct Maze* maze);
 void Set_Goal_Cell(struct Maze* maze, int num_of_goals);
-void Floodfill(struct Maze* maze);
-enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos);
+void Floodfill(struct Maze* maze, enum mode_type_t mode);
+enum Direction Best_Cell(struct Maze* maze, struct Coord mouse_pos, enum mode_type_t mode);
 void Maze_Init(struct Maze* maze);
 
 void Search_Mode(struct Maze* maze);
-void Race_Mode(struct Maze* maze);
+void Race_Mode(struct Maze maze);
 
 #endif /* INC_MM_FLOODFILL_H_ */

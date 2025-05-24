@@ -232,16 +232,20 @@ void floodfill(Maze* maze, mode_type_t mode) {
                     replacement_index++;
                 }
             }
-            memcpy(neighbors->cells, replacement_array, sizeof(replacement_array));
+            neighbors->cells = replacement_array;
         }
 
         for (uint8_t neighbor = 0; neighbor < neighbors->size; neighbor++) {                            // For each neighbor cell, check if its cost/distance is > new distance -- if so, update its value
             if (maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] > new_distance) {
                 maze->distances[neighbors->cells[neighbor].pos.y][neighbors->cells[neighbor].pos.x] = new_distance;
-                queue[tail] = neighbors->cells[neighbor].pos; tail++;
+                queue[tail] = neighbors->cells[neighbor].pos;
+                tail++;
             }
         }
-        free(neighbors->cells);
+        free(replacement_array);
+        if (mode == SEARCH) {
+            free(neighbors->cells);
+        }
         free(neighbors);
     }
 }
@@ -262,7 +266,7 @@ Direction bestCell(Maze* maze, Coord mouse_pos, mode_type_t mode) {
                 replacement_index++;
             }
         }
-        memcpy(neighbors->cells, replacement_array, sizeof(replacement_array));
+        neighbors->cells = replacement_array;
     }
 
     uint8_t best_cell_index = 0;
@@ -277,7 +281,10 @@ Direction bestCell(Maze* maze, Coord mouse_pos, mode_type_t mode) {
            }
     }
     Direction ret_dir = neighbors->cells[best_cell_index].dir;
-    free(neighbors->cells);
+    free(replacement_array);
+    if (mode == SEARCH) {
+        free(neighbors->cells);
+    }
     free(neighbors);
 
     return ret_dir;                                                                                                 // Return direction of lowest cost cell
@@ -344,10 +351,12 @@ void raceMode(Maze maze) {
             case TURN_RIGHT:
             std::cerr << "Making movement: RIGHT" << std::endl;
                 API::turnRight();
+                API::moveForward();
                 break;
             case TURN_LEFT:
             std::cerr << "Making movement: LEFT" << std::endl;
                 API::turnLeft();
+                API::moveForward();
                 break;
         }
     }
