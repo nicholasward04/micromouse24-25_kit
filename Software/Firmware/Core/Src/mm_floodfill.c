@@ -21,6 +21,7 @@ extern profile_t rotational_profile;
 
 extern bool armed;
 extern bool motor_controller_enabled;
+extern bool steering_adjustment;
 bool disable_adc = false;
 
 extern bool wall_front;
@@ -51,8 +52,8 @@ const float CENTER_TO_WALL_REVERSE_MM = -1 * ((WALL_TO_WALL_MM / 2) + WALL_THICK
 const float SMOOTH_TURN_RADIUS_MM = WALL_TO_WALL_MM / 2; // May need to decrease for sharper turn
 const float SMOOTH_TURN_FWD_MM = M_PI * SMOOTH_TURN_RADIUS_MM / 6;  // div by 2
 
-const float LEFT_TURN_DEG = -92;
-const float RIGHT_TURN_DEG = 90;
+const float LEFT_TURN_DEG = -93;
+const float RIGHT_TURN_DEG = 92;
 const float ABOUT_TURN_DEG = 185;
 
 const float SEARCH_SPEED_FWD_MAX = 600;
@@ -359,36 +360,9 @@ void Search_Mode(struct Maze* maze) {
 			Set_Goal_Cell(maze, 1); // Change goal cell back to origin
 
 			// Save maze to flash memory
-			Save_Maze_To_Flash(maze);
-
-			// Manually set walls for all goal cells
-//            maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] = 0b1111;
-//            if (maze->mouse_dir == NORTH) {
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1101;
-//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
-//            }
-//            else if (maze->mouse_dir == SOUTH) {
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b0111;
-//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
-//            }
-//            else if (maze->mouse_dir == EAST) {
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1110;
-//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
-//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
-//            }
-//            else if (maze->mouse_dir == WEST) {
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1011;
-//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
-//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
-//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
-//            }
-//            just_reached_goal = true;
-//            Clear_Profile(&forward_profile);
+//			Save_Maze_To_Flash(maze);
+			Clear_Profile(&forward_profile);
+			Clear_Profile(&rotational_profile);
 		}
 		else {
 			// Mouse has returned to start position, realign with wall and wait for user input
@@ -401,7 +375,11 @@ void Search_Mode(struct Maze* maze) {
 			prev_action = ABOUT_FACE;
 			Set_Goal_Cell(maze, 4); // Change goal cell back to center of maze
 
+			Clear_Profile(&forward_profile);
+			Clear_Profile(&rotational_profile);
+
 			armed = false;
+			steering_adjustment = false;
 			motor_controller_enabled = false;
 		}
 	}

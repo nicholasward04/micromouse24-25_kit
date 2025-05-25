@@ -22,10 +22,10 @@ const float IR_KP = 0.008f;
 const float IR_KD = 0.8f;
 
 // Translation Values (determined before runtime)
-uint16_t translation_FL = 114;
-uint16_t translation_L = 647;
-uint16_t translation_R = 328;
-uint16_t translation_FR = 135;
+uint16_t translation_FL = 98;
+uint16_t translation_L = 565;
+uint16_t translation_R = 442;
+uint16_t translation_FR = 94;
 
 // Wall Thresholds
 uint16_t wall_front_thresh = 40;

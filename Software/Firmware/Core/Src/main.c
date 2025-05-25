@@ -123,7 +123,9 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 
 
-  HAL_Init();
+
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
   LED_Power_Init();
@@ -189,6 +191,10 @@ int main(void)
 				  Race_Mode(maze);
 				  break;
 		  }
+	  }
+	  else {
+		  motor_controller_enabled = false;
+		  adjust_steering = false;
 	  }
   }
   /* USER CODE END 3 */
