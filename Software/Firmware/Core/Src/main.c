@@ -121,6 +121,8 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
+
   HAL_Init();
 
   /* USER CODE BEGIN Init */
@@ -175,9 +177,10 @@ int main(void)
 		  adjust_steering = true;
 		  switch (mouse_mode) {
 			  case TEST: // Mode for testing code without having to comment lines out
-				  // Make change to maze
-				  Save_Maze_To_Flash(&maze);
-				  // Turn off mouse and remove code, click button to load maze and verify is the same
+				  Set_Direction(MOTOR_LEFT, FORWARD);
+				  Set_Direction(MOTOR_RIGHT, FORWARD);
+				  Set_PWM(MOTOR_LEFT, 1000);
+				  Set_PWM(MOTOR_RIGHT, 1000);
 				  break;
 			  case SEARCHING:
 				  Search_Mode(&maze);

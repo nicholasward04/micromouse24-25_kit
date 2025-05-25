@@ -11,4 +11,4 @@
 ../Core/Src/mm_supplemental.c:102:6:Load_Maze_From_Flash	24	static
 ../Core/Src/mm_supplemental.c:107:6:ARM_Button	16	static
 ../Core/Src/mm_supplemental.c:115:6:RACE_Button	8	static
-../Core/Src/mm_supplemental.c:131:6:LOADMAZE_Button	8	static
+../Core/Src/mm_supplemental.c:133:6:LOADMAZE_Button	8	static

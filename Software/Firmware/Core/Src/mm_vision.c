@@ -16,16 +16,16 @@ extern mouse_state_t mouse_state;
 extern float SYSTICK_FREQUENCY;
 
 const uint16_t FRONT_WALL_LIMIT = 300; // If front wall too close, disable IR correction due to increase in reflection
-float STEERING_ADJUSTMENT_LIMIT = 1.0f; // In degrees 0.5
+float STEERING_ADJUSTMENT_LIMIT = 0.1f; // In degrees 0.5
 
 const float IR_KP = 0.008f;
-const float IR_KD = 0.0001f;
+const float IR_KD = 0.8f;
 
 // Translation Values (determined before runtime)
-uint16_t translation_FL = 149;
-uint16_t translation_L = 686;
-uint16_t translation_R = 575;
-uint16_t translation_FR = 154;
+uint16_t translation_FL = 114;
+uint16_t translation_L = 647;
+uint16_t translation_R = 328;
+uint16_t translation_FR = 135;
 
 // Wall Thresholds
 uint16_t wall_front_thresh = 40;

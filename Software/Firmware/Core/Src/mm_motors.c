@@ -14,6 +14,7 @@ extern float delta_position_forward;
 extern float delta_position_rotational;
 
 extern profile_t rotational_profile;
+extern bool motor_controller_enabled;
 
 extern const float MOUSE_RADIUS;
 extern mouse_state_t mouse_state;
@@ -129,6 +130,8 @@ void Complete_Stop() {
 
 	Set_PWM(MOTOR_LEFT, 0);
 	Set_PWM(MOTOR_RIGHT, 0);
+
+	motor_controller_enabled = false;
 }
 
 float Position_Controller(float velocity) {
@@ -150,23 +153,6 @@ float Rotational_Controller(float steering_adjustment, float omega) {
 	return ROT_KP * rotational_error + ROT_KD * rotational_error_difference;
 }
 
-float Feed_Forward(motor_t motor, float motor_speed) {
-	float previous_speed = motor == MOTOR_LEFT ? motor_left_previous_speed: motor_right_previous_speed;
-	float feedforward = motor_speed * SPEED_FF;
-	if (motor_speed > 0) {
-		feedforward += BIAS_FF;
-	}
-	else if (motor_speed < 0) {
-		feedforward -= BIAS_FF;
-	}
-	float acceleration = (motor_speed - previous_speed) * SYSTICK_FREQUENCY;
-	previous_speed = motor_speed;
-	float acceleration_feedforward = ACC_FF * acceleration;
-	feedforward += acceleration_feedforward;
-
-	return feedforward;
-}
-
 void Update_Motors(float velocity, float omega, float steering_adjustment) {
 	steering_adjustment = rotational_profile.state == IDLE || rotational_profile.state == COMPLETE ? steering_adjustment : 0;
 
@@ -178,13 +164,6 @@ void Update_Motors(float velocity, float omega, float steering_adjustment) {
 	motor_left_voltage = position_output - rotational_output;
 	motor_right_voltage = position_output + rotational_output;
 
-	float tangent_speed = omega * MOUSE_RADIUS * RADIANS_PER_DEGREE;
-	float motor_left_speed = velocity - tangent_speed;
-	float motor_right_speed = velocity + tangent_speed;
-	#ifdef FEEDFORWARD_ENABLE
-		motor_left_voltage += Feed_Forward(MOTOR_LEFT, motor_left_speed);
-		motor_right_voltage += Feed_Forward(MOTOR_RIGHT, motor_right_speed);
-	#endif
 	if (motor_controller_enabled) {
 		Set_Motor_Volts(MOTOR_LEFT, motor_left_voltage);
 		Set_Motor_Volts(MOTOR_RIGHT, motor_right_voltage);

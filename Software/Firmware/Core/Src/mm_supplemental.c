@@ -113,12 +113,14 @@ void ARM_Button() { // Top Button (closest to wheel)
 }
 
 void RACE_Button() { // Middle button
+	#define SMOOTH_TURNS
 	switch (mouse_mode) {
 		case SEARCHING:
-			mouse_mode = RACING;
+//			mouse_mode = RACING;
+			#define SMOOTH_TURNS
 			break;
 		case RACING:
-			mouse_mode = SEARCHING;
+//			mouse_mode = SEARCHING;
 			break;
 		default:
 			return;

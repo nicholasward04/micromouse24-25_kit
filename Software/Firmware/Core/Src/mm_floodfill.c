@@ -11,7 +11,7 @@
 #include "mm_profiles.h"
 #include "mm_motors.h"
 
-#define SMOOTH_TURNS
+//#define SMOOTH_TURNS
 
 extern mouse_state_t mouse_state;
 extern struct Maze maze;
@@ -24,6 +24,7 @@ extern bool motor_controller_enabled;
 bool disable_adc = false;
 
 extern bool wall_front;
+bool just_reached_goal = false;
 
 const uint16_t MAX_COST = 256;
 char dir_chars[4] = {'n', 'e', 's', 'w'};
@@ -41,29 +42,31 @@ bool Off_Maze(int mouse_pos_x, int mouse_pos_y) {
 const float WALL_THICKNESS = 12;
 const float MOUSE_BACK_TO_CENTER_MM = 32.467; // Distance from back of mouse PCB to centerpoint of motors
 
-const float CELL_TO_CELL_MM = 180 - 7;
-const float WALL_TO_WALL_MM = 168 - 7;
+const float WALL_BIAS_MM = 0;
+const float CELL_TO_CELL_MM = 168; // 172 for 500 mm/s  168 for 600
+const float WALL_TO_WALL_MM = 165;
 const float BACK_ON_WALL_TO_CELL_MM = CELL_TO_CELL_MM - (WALL_THICKNESS / 2) - MOUSE_BACK_TO_CENTER_MM;
-const float CELL_TO_CENTER_MM = (WALL_TO_WALL_MM / 2) - (WALL_THICKNESS / 2);
+const float CELL_TO_CENTER_MM = (WALL_TO_WALL_MM / 2) - (WALL_THICKNESS / 2) - WALL_BIAS_MM;
 const float CENTER_TO_WALL_REVERSE_MM = -1 * ((WALL_TO_WALL_MM / 2) + WALL_THICKNESS); // Include some extra distance to guarantee pushed against wall
 const float SMOOTH_TURN_RADIUS_MM = WALL_TO_WALL_MM / 2; // May need to decrease for sharper turn
 const float SMOOTH_TURN_FWD_MM = M_PI * SMOOTH_TURN_RADIUS_MM / 6;  // div by 2
 
-const float LEFT_TURN_DEG = -94;
-const float RIGHT_TURN_DEG = 96;
-const float ABOUT_TURN_DEG = 190;
+const float LEFT_TURN_DEG = -92;
+const float RIGHT_TURN_DEG = 90;
+const float ABOUT_TURN_DEG = 185;
 
-const float SEARCH_SPEED_FWD_MAX = 500;
-const float SEARCH_SPEED_ROT_MAX = 500;
-const float SEARCH_SPEED_ROT_SMOOTH_MAX = 350;
+const float SEARCH_SPEED_FWD_MAX = 600;
+const float SEARCH_SPEED_ROT_MAX = 600;
+const float SEARCH_SPEED_ROT_SMOOTH_MAX = 500;
 const float SEARCH_SPEED_FWD_SMOOTH_MAX = 350;
-const float SEARCH_ACCELERATION = 3000;
+const float SEARCH_ACCELERATION = 2500;
 
-const float RACE_SPEED_FWD_MAX = 1000;
-const float RACE_SPEED_ROT_MAX = 750;
-const float RACE_SPEED_ROT_SMOOTH_MAX = 350;
+
+const float RACE_SPEED_FWD_MAX = 700;
+const float RACE_SPEED_ROT_MAX = 500;
+const float RACE_SPEED_ROT_SMOOTH_MAX = 450;
 const float RACE_SPEED_FWD_SMOOTH_MAX = 350;
-const float RACE_ACCELERATION = 3000;
+const float RACE_ACCELERATION = 2500;
 
 param_t fwd_placeholder_1 = { 0 };
 param_t fwd_placeholder_2 = { 0 };
@@ -319,7 +322,7 @@ void Search_Mode(struct Maze* maze) {
 		}
 	else if (best_dir == (enum Direction)((maze->mouse_dir + 2) % 4)) { // About turn
 		rot_placeholder_1 = Parameter_Packer(ABOUT_TURN_DEG, SEARCH_SPEED_ROT_MAX, 0, SEARCH_ACCELERATION, false);
-		if (wall_front) { // Back up into wall to realign, continue from there
+		if (wall_front && !just_reached_goal) { // Back up into wall to realign, continue from there
 			fwd_placeholder_1 = Parameter_Packer(CELL_TO_CENTER_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			fwd_placeholder_2 = Parameter_Packer(CENTER_TO_WALL_REVERSE_MM, SEARCH_SPEED_FWD_MAX, 0, SEARCH_ACCELERATION, true);
 			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, true);
@@ -330,6 +333,7 @@ void Search_Mode(struct Maze* maze) {
 			About_Face_Container(fwd_placeholder_1, fwd_placeholder_2, rot_placeholder_1, &forward_profile, &rotational_profile, false);
 			maze->mouse_dir = (enum Direction)((maze->mouse_dir + 2) % 4);
 			prev_action = NONE;
+			just_reached_goal = false;
 		}
 	}
 
@@ -356,6 +360,35 @@ void Search_Mode(struct Maze* maze) {
 
 			// Save maze to flash memory
 			Save_Maze_To_Flash(maze);
+
+			// Manually set walls for all goal cells
+//            maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] = 0b1111;
+//            if (maze->mouse_dir == NORTH) {
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1101;
+//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
+//            }
+//            else if (maze->mouse_dir == SOUTH) {
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b0111;
+//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
+//            }
+//            else if (maze->mouse_dir == EAST) {
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1110;
+//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x+1] |= WEST_MASK;
+//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
+//            }
+//            else if (maze->mouse_dir == WEST) {
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x] &= 0b1011;
+//                maze->cellWalls[maze->mouse_pos.y+1][maze->mouse_pos.x] |= SOUTH_MASK;
+//                maze->cellWalls[maze->mouse_pos.y][maze->mouse_pos.x-1] |= EAST_MASK;
+//                maze->cellWalls[maze->mouse_pos.y-1][maze->mouse_pos.x] |= NORTH_MASK;
+//            }
+//            just_reached_goal = true;
+//            Clear_Profile(&forward_profile);
 		}
 		else {
 			// Mouse has returned to start position, realign with wall and wait for user input

@@ -5,6 +5,7 @@
  */
 
 #include "mm_profiles.h"
+#include "mm_motors.h"
 
 extern float SYSTICK_INTERVAL;
 
@@ -13,6 +14,7 @@ extern profile_t rotational_profile;
 
 extern bool adjust_steering;
 extern float STEERING_ADJUSTMENT_LIMIT;
+extern bool motor_controller_enabled;
 
 extern float mouse_position;
 extern float mouse_angle;
@@ -44,7 +46,7 @@ void Start_Profile(param_t parameters, profile_t* profile) {
 	}
 
 	profile->position = 0;
-	profile->parameters.distance += profile == &forward_profile ? on_completion_error_forward : 0;
+	profile->parameters.distance -= profile == &forward_profile ? on_completion_error_forward : 0;
 	parameters.max_speed = profile->direction * fabsf(parameters.max_speed);
 	parameters.end_speed = profile->direction * fabsf(parameters.end_speed);
 	parameters.acceleration = fabsf(parameters.acceleration);
@@ -65,27 +67,29 @@ void Profile_Container(param_t parameters, profile_t* profile) {
 void Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
     Profile_Container(fwd_parameters, fwd_profile);
     adjust_steering = false;
-    STEERING_ADJUSTMENT_LIMIT = 0.1;
     Clear_Profile(fwd_profile);
     Clear_Profile(rot_profile);
     Profile_Container(rot_parameters, rot_profile);
     Clear_Profile(rot_profile);
     fwd_parameters.end_speed = fwd_parameters.max_speed;
+    fwd_parameters.distance += 7;
     adjust_steering = true;
+    STEERING_ADJUSTMENT_LIMIT = 0.1;
     Profile_Container(fwd_parameters, fwd_profile);
-    STEERING_ADJUSTMENT_LIMIT = 0.5;
+    STEERING_ADJUSTMENT_LIMIT = 0.1;
 }
 
 void Smooth_Turn_Container(param_t fwd_parameters, param_t rot_parameters, profile_t* fwd_profile, profile_t* rot_profile) {
 	adjust_steering = false;
-	rot_parameters.acceleration *= 2;
+	rot_parameters.acceleration *= 3;
 	Clear_Profile(rot_profile);
+	on_completion_error_forward = 0;
 	Start_Profile(fwd_parameters, fwd_profile);
 	Start_Profile(rot_parameters, rot_profile);
 	while (rot_profile->state != COMPLETE);
 	Clear_Profile(rot_profile);
 	adjust_steering = true;
-	fwd_parameters.distance = 15;
+	fwd_parameters.distance = 40;
 	Profile_Container(fwd_parameters, fwd_profile);
 }
 
@@ -103,6 +107,8 @@ void About_Face_Container(param_t fwd_parameters, param_t rev_parameters, param_
 	}
 	else { // Turn in place
 		adjust_steering = false;
+		Clear_Profile(rot_profile);
+		Clear_Profile(fwd_profile);
 		Profile_Container(rot_parameters, rot_profile);
 		Clear_Profile(rot_profile);
 		HAL_Delay(500);

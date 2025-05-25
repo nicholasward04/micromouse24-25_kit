@@ -407,7 +407,36 @@ int main(int argc, char* argv[]) {
                 API::turnLeft();
                 maze.mouse_dir = (Direction)((maze.mouse_dir + 2) % 4);
             }                                 
-            else { setGoalCell(&maze, 1); goal_swap = 1;}                                                           // Mouse has reached center of maze goal position
+            else { 
+                setGoalCell(&maze, 1);
+                goal_swap = 1;
+            
+                maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x] = 0b1111;
+                if (maze.mouse_dir == NORTH) {
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x] &= 0b1101;
+                    maze.cellWalls[maze.mouse_pos.y+1][maze.mouse_pos.x] |= SOUTH_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x+1] |= WEST_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x-1] |= EAST_MASK;
+                }
+                else if (maze.mouse_dir == SOUTH) {
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x] &= 0b0111;
+                    maze.cellWalls[maze.mouse_pos.y-1][maze.mouse_pos.x] |= NORTH_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x+1] |= WEST_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x-1] |= EAST_MASK;
+                }
+                else if (maze.mouse_dir == EAST) {
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x] &= 0b1110;
+                    maze.cellWalls[maze.mouse_pos.y+1][maze.mouse_pos.x] |= SOUTH_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x+1] |= WEST_MASK;
+                    maze.cellWalls[maze.mouse_pos.y-1][maze.mouse_pos.x] |= NORTH_MASK;
+                }
+                else if (maze.mouse_dir == WEST) {
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x] &= 0b1011;
+                    maze.cellWalls[maze.mouse_pos.y+1][maze.mouse_pos.x] |= SOUTH_MASK;
+                    maze.cellWalls[maze.mouse_pos.y][maze.mouse_pos.x-1] |= EAST_MASK;
+                    maze.cellWalls[maze.mouse_pos.y-1][maze.mouse_pos.x] |= NORTH_MASK;
+                }
+            }                                                           // Mouse has reached center of maze goal position
         }
     }
     raceMode(maze);
