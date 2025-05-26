@@ -419,7 +419,7 @@ void Race_Mode(struct Maze maze) {
     uint16_t total_params = 0;
 	param_t param_list[512] = { 0 };
 	bool back_to_wall = true;
-    // Combine indivudal motions into larger profiles
+    // Combine individual motions into larger profiles
     for (uint16_t curr_motion = 0; curr_motion < prelim_motions_length; curr_motion++) {
         switch (prelim_motion_queue[curr_motion]) {
             case FORWARD_ONE_CELL:
@@ -445,7 +445,7 @@ void Race_Mode(struct Maze maze) {
 					param_list[total_params] = Parameter_Packer(RIGHT_TURN_DEG, RACE_SPEED_ROT_MAX, 0, RACE_ACCELERATION, false);
 					total_params++;
 
-					// Start new forward profile for intial movement
+					// Start new forward profile for inital movement
 					param_list[total_params].distance += CELL_TO_CENTER_MM;
 				#else
             		// Smooth turns

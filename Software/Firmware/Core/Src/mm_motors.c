@@ -34,10 +34,6 @@ const float FWD_TM = 0.1; // time constant
 const float ROT_KM = FWD_KM * 1.3; // slope dg/s/volt 1.3
 const float ROT_TM = 0.1; // time constant
 
-const float SPEED_FF = 1 / (FWD_KM);  // v/mm/s or 1/fwd_km
-const float ACC_FF = FWD_TM / (2 * FWD_KM);    // fwd_tm / fwd_km
-const float BIAS_FF = 0.442;   // y intercept for (x) (y) -> (speed) (volt)
-
 const float FWD_ZETA = 0.707; // sqrt(1/2) smaller is more agressive, larger is slower
 const float FWD_TD = FWD_TM;  // fwd_tm
 const float FWD_KP = 16 * FWD_TM / (FWD_KM * FWD_ZETA * FWD_ZETA * FWD_TD * FWD_TD);
