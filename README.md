@@ -14,8 +14,17 @@ Version using STM32F103C8T6 chip front and back. Same as previous in terms of mi
 
 <img src="https://github.com/user-attachments/assets/0bcf6cd8-7790-47f7-8646-606f38799931" width="350">  <img src="https://github.com/user-attachments/assets/06eaa6ac-2706-48ad-be41-6625ef521af0" width="350">
 
-Both designs are almost completely identical besides a power LED and a few capacitors. Here are the bare PCBs.
-
-<img src="https://github.com/user-attachments/assets/6a45d8fa-f9d8-41f5-b571-5c96f9dcff8b" width="700">
-
-The software must still be worked on, but will be a revamped/redone version of my previous years mouse software, which can be found [here](https://github.com/nicholasward04/teamfriendship.git). As I work on it, I will push changes to this repository (micromouse24-25_kit). 
+The software is split into 3 main components:
+  1. The simulation
+  2. The debugging GUI
+  3. The firmware
+<br>
+1. The first part I worked on was my maze-solving algorithm in mackorone's micromouse simulator (https://github.com/mackorone/mms). Below is a gif of such:
+<img src="Media/simgif.gif" alt="Example" width="1000">
+<br>
+2. In parallel with the firmware, I developed a debugging tool using the Python Tkinter library, communicating with a UART bluetooth module on board my micromouse. This tool wasn't fully completed, but was useful for viewing telemetry from my mouse, such as IR sensor readings and battery voltage. If I were to do it again, I would have developed it in Visual Studio using C#, since the toolkits are much more advanced and easier to work with. Nevertheless, it was a good experience implementing wireless communication across a UART serial interface. Below is an image of the tool:
+<img src="Media/mm_gui.jpg" alt="Example" width="1000">
+<br>
+3. Lastly, and most importantly, the firmware for my mouse was devleoped in C using the STM32CubeIDE. Below is a link to my best run at competition, where I placed 4th overall:
+  
+[![image](Media/TheHammer.png)](https://www.youtube.com/live/5uL4w6jP68s?si=986Pjw4Ats6Im9Sl&t=11015)
